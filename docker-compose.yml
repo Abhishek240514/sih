@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: bitcoin-forensics-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - APP_NAME=Bitcoin Forensic Intelligence System
+      - APP_VERSION=1.0.0
+      - DEBUG=false
+      - HOST=0.0.0.0
+      - PORT=8000
+      - MAX_UPLOAD_SIZE=104857600
+      - ML_CONTAMINATION=0.1
+      - ML_N_ESTIMATORS=100
+      - ML_RANDOM_SEED=42
+      - RISK_ML_ANOMALY_WEIGHT=0.30
+      - RISK_GRAPH_WEIGHT=0.20
+      - RISK_TEMPORAL_WEIGHT=0.20
+      - RISK_NETWORK_WEIGHT=0.15
+      - RISK_BEHAVIOR_WEIGHT=0.15
+      - RISK_LOW_THRESHOLD=0.25
+      - RISK_MEDIUM_THRESHOLD=0.50
+      - RISK_HIGH_THRESHOLD=0.75
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  pipeline:
+    build: .
+    container_name: bitcoin-forensics-pipeline
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app
+    command: python scripts/run_pipeline.py --generate --transactions 50000
+    depends_on:
+      - api
+    profiles:
+      - pipeline
