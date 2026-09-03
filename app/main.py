@@ -12,6 +12,7 @@ from app.core.exceptions import (
     general_exception_handler,
 )
 from app.db.database import init_db
+from app.ml.anomaly_detector import anomaly_detector
 from app.api.routes import (
     health, datasets, investigations, alerts, entities,
     transactions, graph, ml, dashboard,
@@ -26,6 +27,12 @@ async def lifespan(app: FastAPI):
     
     init_db()
     logger.info("Database initialized")
+    
+    # Load ML model if exists
+    if anomaly_detector.load():
+        logger.info(f"ML model loaded: trained at {anomaly_detector.trained_at}")
+    else:
+        logger.info("No trained ML model found, will train on first dataset")
     
     yield
     

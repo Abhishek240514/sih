@@ -1,0 +1,56 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/vite";
+
+@theme {
+  --color-primary: #1e40af;
+  --color-primary-hover: #1e3a8a;
+  --color-critical: #dc2626;
+  --color-high: #ea580c;
+  --color-medium: #ca8a04;
+  --color-low: #16a34a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.cy-node {
+  cursor: pointer;
+}
+
+.cy-node:hover {
+  opacity: 0.8;
+}
+
+.cy-edge {
+  opacity: 0.6;
+}
+
+.tooltip {
+  position: absolute;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
