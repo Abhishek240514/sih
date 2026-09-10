@@ -2,7 +2,11 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 
 interface DatasetContextType {
   datasetId: string | null;
+  activeDatasetId: string | null;
+  datasets?: any[];
   setDatasetId: (id: string) => void;
+  setActiveDatasetId?: (id: string) => void;
+  refreshDatasets?: () => void;
 }
 
 const DatasetContext = createContext<DatasetContextType | undefined>(undefined);
@@ -18,7 +22,16 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <DatasetContext.Provider value={{ datasetId, setDatasetId: setDataset }}>
+    <DatasetContext.Provider
+      value={{
+        datasetId,
+        activeDatasetId: datasetId,
+        datasets: [],
+        setDatasetId: setDataset,
+        setActiveDatasetId: setDataset,
+        refreshDatasets: () => {},
+      }}
+    >
       {children}
     </DatasetContext.Provider>
   );

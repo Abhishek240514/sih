@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDataset } from '@/context/DatasetContext';
 import { useEntityGraph, useShortestPath, useConnectedComponents } from '@/hooks/useGraph';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { Skeleton } from '@/components/shared/Skeleton';
-import { cn, truncateAddress, formatRiskScore, getRiskColor } from '@/lib/utils';
-import { Search, Network, Route, Layers, Settings2, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { cn, formatRiskScore, getRiskColor } from '@/lib/utils';
+import { Search, Network, Route, Layers, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import cytoscape from 'cytoscape';
 import type { GraphNode } from '@/lib/types';
 
@@ -62,7 +62,7 @@ export default function GraphExplorer() {
     if (!graphQuery.data || !graphRef.current) return;
 
     const elements: cytoscape.ElementDefinition[] = [];
-    graphQuery.data.nodes.forEach((node) => {
+    graphQuery.data.nodes.forEach((node: any) => {
       elements.push({
         data: {
           id: node.id,
@@ -75,7 +75,7 @@ export default function GraphExplorer() {
       });
     });
 
-    graphQuery.data.edges.forEach((edge, idx) => {
+    graphQuery.data.edges.forEach((edge: any, idx: number) => {
       elements.push({
         data: {
           id: `e-${idx}`,
@@ -413,7 +413,7 @@ export default function GraphExplorer() {
                   </p>
                 </div>
               )}
-              {Object.keys(selectedNode.metadata).length > 0 && (
+              {selectedNode.metadata && Object.keys(selectedNode.metadata).length > 0 && (
                 <div>
                   <span className="text-xs text-slate-500 uppercase mb-1 block">Metadata</span>
                   {Object.entries(selectedNode.metadata).map(([k, v]) => (

@@ -1,6 +1,5 @@
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { cn } from '@/lib/utils';
-import { getRiskLevelColor } from '@/lib/utils';
 
 interface RiskDistributionChartProps {
   data: Record<string, number>;
@@ -33,15 +32,15 @@ export function RiskDistributionChart({ data, className }: RiskDistributionChart
 
   if (total === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-400">
+      <div className={cn("flex items-center justify-center h-64 text-gray-400", className)}>
         No risk data available
       </div>
     );
   }
 
   return (
-    <div className="h-64">
-      <PieChart>
+    <div className={cn("h-64", className)}>
+      <PieChart width={320} height={256}>
         <Pie
           data={chartData}
           cx="50%"
@@ -51,15 +50,15 @@ export function RiskDistributionChart({ data, className }: RiskDistributionChart
           paddingAngle={2}
           dataKey="count"
           nameKey="level"
-          label={({ level, count, label }) => count > 0 ? `${label} ${((count / total) * 100).toFixed(1)}%` : ''}
+          label={(entry: any) => entry.count > 0 ? `${entry.label} ${((entry.count / total) * 100).toFixed(1)}%` : ''}
           labelLine={false}
         >
           {chartData.map((entry, index) => (
             <Cell key={`cell-${index}`} fill={entry.color} />
           ))}
           <Tooltip
-            formatter={(value: number, name: string) => [value, LABELS[name as keyof typeof LABELS] || name]}
-            labelFormatter={(label) => LABELS[label as keyof typeof LABELS] || label}
+            formatter={(value: any, name: any) => [Number(value || 0), LABELS[name as keyof typeof LABELS] || String(name)]}
+            labelFormatter={(label: any) => LABELS[label as keyof typeof LABELS] || String(label)}
             contentStyle={{
               backgroundColor: '#1f2937',
               border: 'none',

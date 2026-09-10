@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { formatNumber, formatCurrency } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 
 interface StatCardProps {
   title: string;

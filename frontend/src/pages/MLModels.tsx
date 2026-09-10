@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useMLStatus, useModelFeatures, useListModels, useTrainModel, usePredictAnomalies, useLoadModel } from '@/hooks/useML';
 import { useDataset } from '@/context/DatasetContext';
-import { CardSkeleton, Skeleton, TableSkeleton } from '@/components/shared/Skeleton';
+import { CardSkeleton, TableSkeleton } from '@/components/shared/Skeleton';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { EmptyState } from '@/components/shared/EmptyState';
 import { formatTimestamp, cn } from '@/lib/utils';
 import {
   Brain, Zap, Activity, Database, CheckCircle2, XCircle,
-  Play, Upload, Loader2, X, BarChart3, Settings,
+  Play, Loader2, X, BarChart3, Settings,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -15,7 +14,7 @@ import {
 import { toast } from 'sonner';
 
 export default function MLModels() {
-  const { activeDatasetId, datasets } = useDataset();
+  const { activeDatasetId, datasets = [] } = useDataset();
   const statusQuery = useMLStatus();
   const featuresQuery = useModelFeatures();
   const modelsQuery = useListModels();
@@ -30,12 +29,13 @@ export default function MLModels() {
   const [showPredictions, setShowPredictions] = useState(false);
   const [predictions, setPredictions] = useState<any>(null);
 
-  const status = statusQuery.data;
-  const processedDatasets = datasets.filter((d) => d.status === 'processed');
+  const status: any = statusQuery.data;
+  const processedDatasets = (datasets || []).filter((d: any) => d.status === 'processed' || d.status === 'READY');
 
   // Prepare features data for chart
-  const featuresData = featuresQuery.data
-    ? Object.entries(featuresQuery.data as Record<string, number>)
+  const rawFeatures: any = featuresQuery.data;
+  const featuresData = rawFeatures && typeof rawFeatures === 'object' && !Array.isArray(rawFeatures)
+    ? Object.entries(rawFeatures as Record<string, number>)
         .map(([name, importance]) => ({
           name: name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
           value: typeof importance === 'number' ? importance : 0,
@@ -48,7 +48,7 @@ export default function MLModels() {
   const handleTrain = async () => {
     if (!trainDatasetId) return;
     try {
-      const result = await trainMutation.mutateAsync({
+      const result: any = await trainMutation.mutateAsync({
         dataset_id: trainDatasetId,
         model_type: 'isolation_forest',
         parameters: {
@@ -56,7 +56,7 @@ export default function MLModels() {
           n_estimators: nEstimators,
         },
       });
-      toast.success(`Model trained successfully! Version: ${result.version}`);
+      toast.success(`Model trained successfully! Version: ${result?.version || 'v2'}`);
       setShowTrain(false);
     } catch (err) {
       toast.error('Training failed: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -252,7 +252,7 @@ export default function MLModels() {
                   className="w-full px-4 py-2.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] text-sm text-slate-300"
                 >
                   <option value="">Select dataset...</option>
-                  {processedDatasets.map((d) => (
+                  {processedDatasets.map((d: any) => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>

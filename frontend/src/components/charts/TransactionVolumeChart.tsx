@@ -1,5 +1,5 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { formatCurrency } from '@/lib/utils';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { cn, formatCurrency } from '@/lib/utils';
 
 interface TransactionVolumeChartProps {
   data: Array<{ timestamp: string; count: number; volume: number }>;
@@ -10,7 +10,7 @@ interface TransactionVolumeChartProps {
 export function TransactionVolumeChart({ data, className, metric = 'volume' }: TransactionVolumeChartProps) {
   if (!data.length) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-400">
+      <div className={cn("flex items-center justify-center h-64 text-gray-400", className)}>
         No volume data available
       </div>
     );
@@ -23,8 +23,8 @@ export function TransactionVolumeChart({ data, className, metric = 'volume' }: T
   }));
 
   return (
-    <div className="h-64">
-      <LineChart data={formattedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+    <div className={cn("h-64", className)}>
+      <LineChart width={600} height={256} data={formattedData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
         <XAxis
           dataKey="time"
@@ -46,9 +46,9 @@ export function TransactionVolumeChart({ data, className, metric = 'volume' }: T
             borderRadius: '8px',
             color: 'white',
           }}
-          labelFormatter={(label) => label}
-          formatter={(value: number, name: string) => [
-            name === 'volume' ? value.toLocaleString('en-US', { style: 'currency', currency: 'BTC', minimumFractionDigits: 2 }) : value,
+          labelFormatter={(label: any) => String(label)}
+          formatter={(value: any, name: any) => [
+            name === 'volume' ? `${Number(value || 0).toFixed(2)} BTC` : Number(value || 0),
             name === 'volume' ? 'Volume (BTC)' : 'Transactions',
           ]}
         />

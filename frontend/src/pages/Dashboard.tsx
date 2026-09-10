@@ -23,13 +23,12 @@ import { useDashboardSummary, useRiskDistribution, useTransactionVolume, useTopA
 import { useDataset } from '@/context/DatasetContext';
 import { StatCard } from '@/components/shared/StatCard';
 import { RiskBadge } from '@/components/shared/RiskBadge';
-import { CardSkeleton, ChartSkeleton, TableSkeleton } from '@/components/shared/Skeleton';
+import { CardSkeleton, TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { formatNumber, formatRiskScore, truncateAddress, formatTimestamp } from '@/lib/utils';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import type { RiskLevel } from '@/lib/types';
 
 const RISK_COLORS: Record<string, string> = {
   CRITICAL: '#ef4444',
@@ -282,7 +281,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {topWalletsQuery.data.wallets.map((w) => (
+                  {topWalletsQuery.data.wallets.map((w: any) => (
                     <tr
                       key={w.address}
                       onClick={() => navigate(`/investigations/${w.address}`)}

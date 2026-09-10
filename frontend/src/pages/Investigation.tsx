@@ -27,7 +27,7 @@ export default function Investigation() {
   const cyRef = useRef<cytoscape.Core | null>(null);
 
   const query = useInvestigation(entityId || '');
-  const data = query.data;
+  const data: any = query.data;
 
   // Cytoscape graph
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function Investigation() {
 
     const elements: cytoscape.ElementDefinition[] = [];
 
-    data.graph_neighborhood.nodes.forEach((node) => {
+    data.graph_neighborhood.nodes.forEach((node: any) => {
       elements.push({
         data: {
           id: node.id,
@@ -47,7 +47,7 @@ export default function Investigation() {
       });
     });
 
-    data.graph_neighborhood.edges.forEach((edge, idx) => {
+    data.graph_neighborhood.edges.forEach((edge: any, idx: number) => {
       elements.push({
         data: {
           id: `e-${idx}`,
@@ -193,7 +193,7 @@ export default function Investigation() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-3 mb-2">
                   <h2 className="text-lg font-bold text-white font-mono truncate">{entityId}</h2>
-                  <RiskBadge level={data.risk_level} />
+                  <RiskBadge level={data.risk_level as any} />
                 </div>
                 <div className="flex items-center gap-4 text-xs text-slate-500">
                   <span className="capitalize">{data.entity_type}</span>
@@ -206,7 +206,7 @@ export default function Investigation() {
 
             {/* Key Metrics */}
             {data.related_wallets?.[0] && (() => {
-              const w = data.related_wallets.find(rw => rw.address === entityId) || data.related_wallets[0];
+              const w = data.related_wallets.find((rw: any) => rw.address === entityId) || data.related_wallets[0];
               return (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                   <MetricItem icon={<ArrowRightLeft className="w-4 h-4" />} label="TX Count" value={String(w.transaction_count)} />
@@ -250,7 +250,7 @@ export default function Investigation() {
                   {data.timeline.length === 0 ? (
                     <p className="text-sm text-slate-500 py-4 text-center">No timeline events</p>
                   ) : (
-                    data.timeline.map((event, idx) => (
+                    data.timeline.map((event: any, idx: number) => (
                       <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-slate-900/30 hover:bg-slate-800/30 transition-colors">
                         <div className="w-2 h-2 rounded-full bg-blue-400 mt-1.5 shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -283,7 +283,7 @@ export default function Investigation() {
                         </tr>
                       </thead>
                       <tbody>
-                        {data.related_transactions.map((tx) => (
+                        {data.related_transactions.map((tx: any) => (
                           <tr key={tx.txid} className="border-b border-[var(--border-color)] hover:bg-slate-800/30">
                             <td className="px-3 py-2 font-mono text-xs text-slate-300">{truncateAddress(tx.txid, 8)}</td>
                             <td className="px-3 py-2 text-xs text-slate-500">{formatTimestamp(tx.timestamp)}</td>
@@ -326,7 +326,7 @@ export default function Investigation() {
                     </h4>
                     {data.related_wallets.length > 0 ? (
                       <div className="space-y-1">
-                        {data.related_wallets.slice(0, 10).map((w) => (
+                        {data.related_wallets.slice(0, 10).map((w: any) => (
                           <button
                             key={w.address}
                             onClick={() => navigate(`/investigations/${w.address}`)}
@@ -352,7 +352,7 @@ export default function Investigation() {
                     </h4>
                     {data.related_ips.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {data.related_ips.map((ip) => (
+                        {data.related_ips.map((ip: any) => (
                           <span key={ip} className="px-3 py-1.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] text-xs font-mono text-slate-300">
                             {ip}
                           </span>
@@ -370,7 +370,7 @@ export default function Investigation() {
                     </h4>
                     {data.related_asns.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {data.related_asns.map((asn) => (
+                        {data.related_asns.map((asn: any) => (
                           <span key={asn} className="px-3 py-1.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] text-xs font-mono text-slate-300">
                             {asn}
                           </span>
@@ -388,7 +388,7 @@ export default function Investigation() {
                     </h4>
                     {data.countries.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
-                        {data.countries.map((c) => (
+                        {data.countries.map((c: any) => (
                           <span key={c} className="px-3 py-1.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] text-xs text-slate-300">
                             {c}
                           </span>
@@ -413,7 +413,7 @@ export default function Investigation() {
               Risk Signals ({data.reasons.length})
             </h3>
             <div className="space-y-3">
-              {data.reasons.map((reason, idx) => (
+              {data.reasons.map((reason: any, idx: number) => (
                 <div key={idx} className="p-3 rounded-lg bg-slate-900/30 border border-[var(--border-color)]">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-xs font-semibold text-slate-200">{reason.signal}</span>
@@ -442,7 +442,7 @@ export default function Investigation() {
                 Correlation Evidence ({data.correlation_evidence.length})
               </h3>
               <div className="space-y-3">
-                {data.correlation_evidence.map((ce, idx) => (
+                {data.correlation_evidence.map((ce: any, idx: number) => (
                   <div key={idx} className="p-3 rounded-lg bg-slate-900/30 border border-[var(--border-color)]">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-mono text-slate-300">{truncateAddress(ce.ip)}</span>
@@ -456,7 +456,7 @@ export default function Investigation() {
                     <p className="text-xs text-slate-500 font-mono truncate">TX: {truncateAddress(ce.txid)}</p>
                     {ce.evidence.length > 0 && (
                       <div className="mt-2 space-y-1">
-                        {ce.evidence.slice(0, 3).map((e, eidx) => (
+                        {ce.evidence.slice(0, 3).map((e: any, eidx: number) => (
                           <p key={eidx} className="text-[11px] text-slate-500">• {e}</p>
                         ))}
                       </div>

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useDatasets, useUploadDataset, useProcessDataset, useDeleteDataset } from '@/hooks/useDatasets';
 import { useDataset } from '@/context/DatasetContext';
-import { TableSkeleton, Skeleton } from '@/components/shared/Skeleton';
+import { TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { formatTimestamp, cn, datasetStatusConfig } from '@/lib/utils';
@@ -16,7 +16,7 @@ export default function Datasets() {
   const uploadMutation = useUploadDataset();
   const processMutation = useProcessDataset();
   const deleteMutation = useDeleteDataset();
-  const { setActiveDatasetId, activeDatasetId, refreshDatasets } = useDataset();
+  const { setActiveDatasetId = () => {}, activeDatasetId, refreshDatasets = () => {} } = useDataset();
 
   const [showUpload, setShowUpload] = useState(false);
   const [uploadName, setUploadName] = useState('');
@@ -229,20 +229,20 @@ export default function Datasets() {
                         <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-800/50 text-slate-400 uppercase">{ds.format}</span>
                       </td>
                       <td className="px-5 py-3">
-                        <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border', statusConf.color)}>
-                          {ds.status === 'processing' && <Loader2 className="w-3 h-3 animate-spin" />}
-                          {ds.status === 'processed' && <CheckCircle2 className="w-3 h-3" />}
-                          {ds.status === 'failed' && <AlertTriangle className="w-3 h-3" />}
-                          {statusConf.label}
+                        <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border', (statusConf as any)?.class || (statusConf as any)?.color)}>
+                          {String(ds.status).toLowerCase() === 'processing' && <Loader2 className="w-3 h-3 animate-spin" />}
+                          {String(ds.status).toLowerCase() === 'processed' && <CheckCircle2 className="w-3 h-3" />}
+                          {String(ds.status).toLowerCase() === 'failed' && <AlertTriangle className="w-3 h-3" />}
+                          {statusConf?.label || ds.status}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-right text-slate-300">{ds.total_records.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right text-emerald-400">{ds.valid_records.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right text-red-400">{ds.invalid_records.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-xs text-slate-500">{formatTimestamp(ds.created_at)}</td>
+                      <td className="px-5 py-3 text-right text-slate-300">{((ds as any).total_records ?? ds.records_count ?? 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right text-emerald-400">{((ds as any).valid_records ?? ds.valid_tx_count ?? 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right text-red-400">{((ds as any).invalid_records ?? ds.anomaly_count ?? 0).toLocaleString()}</td>
+                      <td className="px-5 py-3 text-xs text-slate-500">{formatTimestamp((ds as any).created_at ?? ds.uploaded_at)}</td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1">
-                          {ds.status === 'uploaded' && (
+                          {String(ds.status).toLowerCase() === 'uploaded' && (
                             <button
                               onClick={() => handleProcess(ds.id)}
                               disabled={processMutation.isPending}
@@ -252,7 +252,7 @@ export default function Datasets() {
                               <Play className="w-4 h-4" />
                             </button>
                           )}
-                          {ds.status === 'processed' && !isActive && (
+                          {String(ds.status).toLowerCase() === 'processed' && !isActive && (
                             <button
                               onClick={() => setActiveDatasetId(ds.id)}
                               className="p-1.5 rounded-md hover:bg-blue-500/10 text-blue-400 transition-colors"

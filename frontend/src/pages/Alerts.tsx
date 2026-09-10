@@ -22,11 +22,10 @@ export default function Alerts() {
   const [showFilters, setShowFilters] = useState(false);
 
   const alertsQuery = useAlerts(page * PAGE_SIZE, PAGE_SIZE, riskFilter);
-
-  const alerts = alertsQuery.data?.alerts || [];
+  const alerts: any[] = Array.isArray(alertsQuery.data) ? alertsQuery.data : (alertsQuery.data as any)?.alerts || [];
   const filteredAlerts = search
     ? alerts.filter(
-        (a) =>
+        (a: any) =>
           a.alert_id.toLowerCase().includes(search.toLowerCase()) ||
           a.entity_id.toLowerCase().includes(search.toLowerCase())
       )
@@ -34,7 +33,7 @@ export default function Alerts() {
 
   const handleExportCSV = () => {
     if (!filteredAlerts.length) return;
-    const data = filteredAlerts.map((a) => ({
+    const data = filteredAlerts.map((a: any) => ({
       alert_id: a.alert_id,
       entity_id: a.entity_id,
       entity_type: a.entity_type,
@@ -43,7 +42,7 @@ export default function Alerts() {
       timestamp: a.timestamp,
       reasons_count: a.reasons.length,
     }));
-    const csv = toCSV(data, ['alert_id', 'entity_id', 'entity_type', 'risk_score', 'risk_level', 'timestamp', 'reasons_count']);
+    const csv = toCSV(data);
     downloadFile(csv, `alerts_export_${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
@@ -166,7 +165,7 @@ export default function Alerts() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAlerts.map((alert) => (
+                {filteredAlerts.map((alert: any) => (
                   <tr
                     key={alert.alert_id}
                     onClick={() => navigate(`/investigations/${alert.entity_id}`)}

@@ -6,7 +6,7 @@ import { RiskBadge } from '@/components/shared/RiskBadge';
 import { TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { truncateAddress, formatRiskScore, formatBTC, cn, toCSV, downloadFile } from '@/lib/utils';
+import { truncateAddress, formatRiskScore, formatBTC, toCSV, downloadFile } from '@/lib/utils';
 import { Users, Download, Search, X } from 'lucide-react';
 
 const PAGE_SIZE = 20;
@@ -19,14 +19,14 @@ export default function Entities() {
 
   const entitiesQuery = useEntities(page * PAGE_SIZE, PAGE_SIZE);
 
-  const wallets = entitiesQuery.data?.wallets || [];
+  const wallets: any[] = Array.isArray(entitiesQuery.data) ? entitiesQuery.data : (entitiesQuery.data as any)?.wallets || [];
   const filteredWallets = search
-    ? wallets.filter((w) => w.address.toLowerCase().includes(search.toLowerCase()))
+    ? wallets.filter((w: any) => w.address.toLowerCase().includes(search.toLowerCase()))
     : wallets;
 
   const handleExport = () => {
     if (!filteredWallets.length) return;
-    const data = filteredWallets.map((w) => ({
+    const data = filteredWallets.map((w: any) => ({
       address: w.address,
       transaction_count: w.transaction_count,
       total_in: w.total_in,
@@ -35,7 +35,7 @@ export default function Entities() {
       risk_level: w.risk_level,
       community_id: w.community_id,
     }));
-    const csv = toCSV(data, ['address', 'transaction_count', 'total_in', 'total_out', 'risk_score', 'risk_level', 'community_id']);
+    const csv = toCSV(data);
     downloadFile(csv, `entities_export_${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
@@ -111,7 +111,7 @@ export default function Entities() {
                 </tr>
               </thead>
               <tbody>
-                {filteredWallets.map((w) => (
+                {filteredWallets.map((w: any) => (
                   <tr
                     key={w.address}
                     onClick={() => navigate(`/investigations/${w.address}`)}

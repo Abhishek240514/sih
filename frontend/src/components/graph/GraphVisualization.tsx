@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import cytoscape from 'cytoscape';
+// @ts-ignore
 import cose from 'cytoscape-cose-bilkent';
 import { cn } from '@/lib/utils';
 import { getRiskLevelColor } from '@/lib/utils';
-import type { GraphData, GraphNode, GraphEdge } from '@/types';
+import type { GraphData, GraphNode } from '@/types';
 
 cytoscape.use(cose);
 
@@ -77,31 +78,31 @@ export function GraphVisualization({
           style: {
             'label': 'data(label)',
             'font-size': '10px',
-            'font-weight': '500',
+            'font-weight': 500 as any,
             'text-valign': 'bottom',
             'text-halign': 'center',
             'text-wrap': 'wrap',
             'text-max-width': '80px',
-            'background-color': (ele: cytoscape.NodeSingular) => {
+            'background-color': ((ele: cytoscape.NodeSingular) => {
               const risk = ele.data('risk_score') || 0;
               if (risk > 0.75) return '#dc2626';
               if (risk > 0.5) return '#ea580c';
               if (risk > 0.25) return '#ca8a04';
               return NODE_COLORS[ele.data('type') as keyof typeof NODE_COLORS] || '#6b7280';
-            },
-            'shape': (ele: cytoscape.NodeSingular) => NODE_SHAPES[ele.data('type') as keyof typeof NODE_SHAPES] || 'ellipse',
-            'width': (ele: cytoscape.NodeSingular) => {
+            }) as any,
+            'shape': ((ele: cytoscape.NodeSingular) => NODE_SHAPES[ele.data('type') as keyof typeof NODE_SHAPES] || 'ellipse') as any,
+            'width': ((ele: cytoscape.NodeSingular) => {
               const type = ele.data('type');
               if (type === 'wallet') return 40 + ele.data('risk_score') * 30;
               if (type === 'transaction') return 25;
               return 20;
-            },
-            'height': (ele: cytoscape.NodeSingular) => {
+            }) as any,
+            'height': ((ele: cytoscape.NodeSingular) => {
               const type = ele.data('type');
               if (type === 'wallet') return 40 + ele.data('risk_score') * 30;
               if (type === 'transaction') return 20;
               return 20;
-            },
+            }) as any,
             'border-width': 2,
             'border-color': '#fff',
             'border-opacity': 0.8,
@@ -118,13 +119,13 @@ export function GraphVisualization({
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
             'opacity': 0.6,
-            'label': (ele: cytoscape.EdgeSingular) => {
+            'label': ((ele: cytoscape.EdgeSingular) => {
               if (ele.data('amount')) return (ele.data('amount') as number).toFixed(4);
               return '';
-            },
+            }) as any,
             'font-size': '8px',
-            'edge-text-rotation': 'autorotate',
-          },
+            'text-rotation': 'autorotate' as any,
+          } as any,
         },
         {
           selector: '.selected',
@@ -154,15 +155,14 @@ export function GraphVisualization({
         padding: 50,
         randomize: false,
         componentSpacing: 100,
-      },
+      } as any,
       minZoom: 0.1,
       maxZoom: 2,
       zoomingEnabled: true,
       userZoomingEnabled: true,
-      panzoom: true,
       boxSelectionEnabled: true,
       selectionType: 'single',
-    });
+    } as any);
 
     cyRef.current = cy;
 
@@ -174,7 +174,7 @@ export function GraphVisualization({
       }
       cy.nodes().removeClass('selected');
       node.addClass('selected');
-      setSelectedNode(nodeData);
+      setSelectedNode(nodeData || null);
     });
 
     cy.on('tap', (evt) => {
@@ -202,7 +202,7 @@ export function GraphVisualization({
               {selectedNode.type}
             </span>
             {selectedNode.risk_score > 0 && (
-              <RiskBadge level={selectedNode.risk_score > 0.75 ? 'CRITICAL' : selectedNode.risk_score > 0.5 ? 'HIGH' : selectedNode.risk_score > 0.25 ? 'MEDIUM' : 'LOW'} size="sm" />
+              <RiskBadge level={selectedNode.risk_score > 0.75 ? 'CRITICAL' : selectedNode.risk_score > 0.5 ? 'HIGH' : selectedNode.risk_score > 0.25 ? 'MEDIUM' : 'LOW'} />
             )}
           </div>
         </div>
@@ -211,7 +211,7 @@ export function GraphVisualization({
   );
 }
 
-function RiskBadge({ level, size = 'sm' }: { level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'; size?: 'sm' | 'md' }) {
+function RiskBadge({ level }: { level: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' }) {
   const colors = {
     LOW: 'bg-green-100 text-green-800',
     MEDIUM: 'bg-yellow-100 text-yellow-800',
