@@ -4,7 +4,7 @@ import logging
 
 from app.models.schemas import (
     DashboardSummary, TopAlertResponse, TopWalletResponse,
-    RiskDistributionResponse, TransactionVolumeResponse, Alert
+    RiskDistributionResponse, TransactionVolumeResponse, Alert, Wallet
 )
 from app.db.repository import DatasetRepository, WalletRepository, AlertRepository, TransactionRepository, NetworkObservationRepository
 from app.db.database import get_db_session
@@ -109,22 +109,22 @@ async def get_dashboard_top_wallets(
         
         wallet_objects = []
         for w in wallets:
-            wallet_objects.append(type('Wallet', (), {
-                'address': w.address,
-                'transaction_count': w.transaction_count,
-                'total_in': w.total_in,
-                'total_out': w.total_out,
-                'average_transaction_value': w.average_transaction_value,
-                'unique_counterparties': w.unique_counterparties,
-                'fan_in': w.fan_in,
-                'fan_out': w.fan_out,
-                'first_seen': w.first_seen,
-                'last_seen': w.last_seen,
-                'risk_score': w.risk_score,
-                'risk_level': RiskLevel(w.risk_level),
-                'community_id': w.community_id,
-                'features': w.features or {},
-            })())
+            wallet_objects.append(Wallet(
+                address=w.address,
+                transaction_count=w.transaction_count,
+                total_in=w.total_in,
+                total_out=w.total_out,
+                average_transaction_value=w.average_transaction_value,
+                unique_counterparties=w.unique_counterparties,
+                fan_in=w.fan_in,
+                fan_out=w.fan_out,
+                first_seen=w.first_seen,
+                last_seen=w.last_seen,
+                risk_score=w.risk_score,
+                risk_level=RiskLevel(w.risk_level),
+                community_id=w.community_id,
+                features=w.features or {},
+            ))
         
         return TopWalletResponse(wallets=wallet_objects)
 
