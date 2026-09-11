@@ -4,7 +4,7 @@ import logging
 
 from app.models.schemas import InvestigationResponse
 from app.services.explanation_service import explanation_service
-from app.db.repository import WalletRepository, TransactionRepository, NetworkObservationRepository
+from app.db.repository import WalletRepository, TransactionRepository, NetworkObservationRepository, DatasetRepository
 from app.db.database import get_db_session
 from app.core.exceptions import EntityNotFoundError, DatasetNotFoundError
 

@@ -148,8 +148,38 @@ export default function Investigation() {
     };
   }, [activeTab, data?.graph_neighborhood, entityId, navigate]);
 
-  if (!entityId || !activeDatasetId) {
-    return <ErrorState message="Missing entity ID or dataset" />;
+  if (!entityId) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full space-y-4 animate-fade-in p-8 mt-20">
+        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4 border border-slate-700">
+          <span className="text-3xl">🔍</span>
+        </div>
+        <h2 className="text-2xl font-semibold text-white">Start an Investigation</h2>
+        <p className="text-slate-400 text-center max-w-md">
+          Enter a Bitcoin wallet address to begin a deep-dive forensic investigation.
+        </p>
+        <div className="w-full max-w-md mt-6 relative">
+          <input
+            type="text"
+            placeholder="Enter wallet address..."
+            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.currentTarget.value) {
+                navigate(`/investigations/${e.currentTarget.value}`);
+              }
+            }}
+            autoFocus
+          />
+          <div className="absolute right-3 top-3 text-slate-500 text-xs font-mono bg-slate-800 px-2 py-1 rounded">
+            ENTER ↵
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!activeDatasetId) {
+    return <ErrorState message="Missing active dataset" />;
   }
 
   if (query.isLoading) {

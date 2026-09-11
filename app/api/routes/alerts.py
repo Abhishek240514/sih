@@ -37,7 +37,7 @@ async def get_alerts(
                 risk_score=a.risk_score,
                 risk_level=RiskLevel(a.risk_level),
                 timestamp=a.created_at,
-                reasons=[],  # Would need to store separately
+                reasons=a.reasons or [],  # Would need to store separately
                 related_transactions=a.related_transactions or [],
                 related_wallets=a.related_wallets or [],
                 related_ips=a.related_ips or [],
@@ -91,7 +91,7 @@ async def get_top_alerts(
                 risk_score=a.risk_score,
                 risk_level=RiskLevel(a.risk_level),
                 timestamp=a.created_at,
-                reasons=[],
+                reasons=a.reasons or [],
                 related_transactions=a.related_transactions or [],
                 related_wallets=a.related_wallets or [],
                 related_ips=a.related_ips or [],

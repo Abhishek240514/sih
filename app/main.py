@@ -34,6 +34,17 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("No trained ML model found, will train on first dataset")
     
+    # Auto-ingest generated CSV data if available
+    try:
+        from app.services.csv_ingestion import auto_ingest_sample_data
+        dataset_id = auto_ingest_sample_data()
+        if dataset_id:
+            logger.info(f"Auto-ingested sample data as dataset: {dataset_id}")
+        else:
+            logger.info("No generated CSVs to auto-ingest (run: python scripts/generate_forensic_csvs.py)")
+    except Exception as e:
+        logger.warning(f"Auto-ingestion skipped: {e}")
+    
     yield
     
     logger.info("Shutting down")
