@@ -206,8 +206,8 @@ export const trainModel = async (params: any) =>
     body: JSON.stringify(params),
   });
 
-export const predictAnomalies = async (params: any) =>
-  apiFetch<any>(`/ml/predict${qs({ dataset_id: params?.dataset_id })}`, {
+export const predictAnomalies = async (datasetId: string) =>
+  apiFetch<any>(`/ml/predict${qs({ dataset_id: datasetId })}`, {
     method: 'POST',
   });
 

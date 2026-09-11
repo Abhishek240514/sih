@@ -14,6 +14,7 @@ class GraphBuilder:
         self.graph = nx.MultiDiGraph()
         self.max_nodes = settings.graph_max_nodes
         self.max_edges = settings.graph_max_edges
+        self.current_dataset_id = None
     
     def build_graph(
         self,

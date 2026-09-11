@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import * as api from '../lib/api';
 
 interface DatasetContextType {
   datasetId: string | null;
@@ -16,6 +18,11 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
     () => localStorage.getItem('selectedDatasetId')
   );
 
+  const { data: datasets, refetch } = useQuery({
+    queryKey: ['datasets'],
+    queryFn: () => api.getDatasets(),
+  });
+
   const setDataset = (id: string) => {
     setDatasetId(id);
     localStorage.setItem('selectedDatasetId', id);
@@ -26,10 +33,10 @@ export function DatasetProvider({ children }: { children: ReactNode }) {
       value={{
         datasetId,
         activeDatasetId: datasetId,
-        datasets: [],
+        datasets: datasets || [],
         setDatasetId: setDataset,
         setActiveDatasetId: setDataset,
-        refreshDatasets: () => {},
+        refreshDatasets: refetch,
       }}
     >
       {children}

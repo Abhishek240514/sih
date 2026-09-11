@@ -115,7 +115,14 @@ class ExplanationService:
         transactions: List[NormalizedTransaction],
         network_observations: List[Dict[str, Any]],
     ) -> Dict[str, Any]:
-        ml_score = self.risk_service.compute_ml_anomaly_score(wallet.features.model_dump())
+        from app.models.schemas import WalletFeatures
+        
+        if isinstance(wallet.features, dict):
+            wallet.features = WalletFeatures(**wallet.features)
+        
+        features_dict = wallet.features.model_dump()
+        
+        ml_score = self.risk_service.compute_ml_anomaly_score(features_dict)
         graph_score = self.risk_service.compute_graph_anomaly_score(wallet)
         temporal_score = self.risk_service.compute_temporal_anomaly_score(wallet)
         network_score = self.risk_service.compute_network_correlation_score(wallet)
@@ -155,7 +162,7 @@ class ExplanationService:
         return {
             "entity_id": entity_id,
             "entity_type": entity_type,
-            "risk_score": risk_score,
+            "risk_score": risk_score * 100.0,
             "risk_level": risk_level,
             "reasons": [r.model_dump() for r in reasons],
             "related_wallets": related_wallets,
@@ -197,15 +204,17 @@ class ExplanationService:
             if obs.get("txid"):
                 tx = next((t for t in transactions if t.txid == obs["txid"]), None)
                 if tx and (entity_id in tx.inputs or entity_id in tx.outputs):
+                    ts = obs.get("timestamp")
+                    ts_str = ts.isoformat() if hasattr(ts, "isoformat") else str(ts) if ts else ""
                     events.append({
-                        "timestamp": obs.get("timestamp"),
+                        "timestamp": ts_str,
                         "event_type": "NETWORK_OBSERVATION",
                         "txid": obs["txid"],
                         "ip": obs.get("src_ip") or obs.get("dst_ip"),
                         "country": obs.get("geo_country"),
                     })
         
-        events.sort(key=lambda e: e["timestamp"] or "")
+        events.sort(key=lambda e: str(e["timestamp"] or ""))
         return events
     
     def generate_all_alerts(
