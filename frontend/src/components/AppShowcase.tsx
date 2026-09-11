@@ -89,7 +89,7 @@ export function AppShowcase() {
           </div>
 
           {/* Right Document Mockup */}
-          <div className="lg:col-span-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4 font-mono text-xs text-gray-300 shadow-2xl">
+          <div className="lg:col-span-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 space-y-4 font-mono text-xs text-gray-300 shadow-2xl transition-all duration-300 hover:border-[#D4AF37]/40 hover:shadow-[0_0_30px_rgba(212,175,55,0.1)]">
             <div className="flex items-center justify-between pb-4 border-b border-white/10 text-[11px] text-gray-400">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-[#D4AF37]" />
@@ -103,11 +103,16 @@ export function AppShowcase() {
               <div className="text-white font-semibold font-sans text-sm">
                 In re: Seizure of 63.70000000 Bitcoin from Suspect Extortion Cluster
               </div>
-              <div className="p-3.5 bg-black/40 rounded-xl border border-white/10 text-gray-300 text-[10px] space-y-1.5 tabular-nums">
+              <div className="relative p-3.5 bg-black/40 rounded-xl border border-white/10 text-gray-300 text-[10px] space-y-1.5 tabular-nums overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#D4AF37]/5 to-transparent pointer-events-none animate-pulse" />
                 <div>TARGET SEED: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</div>
                 <div>TERMINAL VASP: Garantex Europe (Sanctioned SDN)</div>
                 <div>PEEL DEPTH: 14 Consecutive 1-in-2-out Layering Outputs</div>
-                <div>DIGITAL CHECKSUM: 8a24c57f9208a0d24e65b40cfb65bdf35a3962b80459a9307d...</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#D4AF37] font-semibold">CHECKSUM:</span>
+                  <span className="truncate">8a24c57f9208a0d24e65b40cfb65bdf35a3962b80459a9307d...</span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+                </div>
               </div>
             </div>
 

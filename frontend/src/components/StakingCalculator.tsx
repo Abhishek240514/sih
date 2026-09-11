@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Sliders, ArrowRight, FileCheck } from 'lucide-react';
-import { initScrollReveal } from '@/lib/animation';
+import { initScrollReveal, tweenNumber } from '@/lib/animation';
 
 interface StakingCalculatorProps {
   onStartInvestigation?: () => void;
@@ -10,10 +10,10 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
   const containerRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const [velocity, setVelocity] = useState(32); // tx / hr
-  const [fanOut, setFanOut] = useState(16); // destinations
+  const [velocity, setVelocity] = useState(38); // tx / hr
+  const [fanOut, setFanOut] = useState(18); // destinations
   const [mixerHops, setMixerHops] = useState(2); // hops
-  const [timeDelta, setTimeDelta] = useState(5); // minutes
+  const [timeDelta, setTimeDelta] = useState(3); // minutes
   const [activePreset, setActivePreset] = useState<string>('ransomware');
 
   useEffect(() => {
@@ -61,6 +61,20 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
     0.15 * ((mlScore + graphScore) / 2);
 
   const riskScore = Math.min(99.4, Math.max(8.5, Math.round(rawScore * 10) / 10));
+
+  // Dynamic numerical tween for liquid odometer effect
+  const [displayScore, setDisplayScore] = useState(riskScore);
+  const prevScoreRef = useRef(riskScore);
+
+  useEffect(() => {
+    const tween = tweenNumber(prevScoreRef.current, riskScore, 0.45, (val) => {
+      setDisplayScore(val);
+    });
+    prevScoreRef.current = riskScore;
+    return () => {
+      tween.kill();
+    };
+  }, [riskScore]);
 
   let riskLevel = 'LOW';
   let riskBadgeStyle = 'text-emerald-700 bg-emerald-50 border-emerald-200';
@@ -236,21 +250,29 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
           </div>
 
           {/* Right Column: Score Dossier & Signal Decomposition */}
-          <div className="lg:col-span-5 bg-white border border-gray-200/90 rounded-2xl p-7 shadow-sm space-y-6">
+          <div
+            className={`lg:col-span-5 bg-white border rounded-2xl p-7 shadow-sm space-y-6 transition-all duration-500 ${
+              riskScore >= 75
+                ? 'border-rose-300 ring-2 ring-rose-500/15 shadow-[0_4px_25px_rgba(225,29,72,0.08)]'
+                : riskScore >= 55
+                ? 'border-amber-300 ring-2 ring-amber-500/15'
+                : 'border-gray-200/90'
+            }`}
+          >
             {/* Header / Score Gauge */}
             <div className="space-y-3 pb-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold tracking-wider text-[#64748B] uppercase">
                   Hybrid Triage Score
                 </span>
-                <span className={`text-xs font-bold font-mono tabular-nums px-2.5 py-1 rounded-full border ${riskBadgeStyle}`}>
+                <span className={`text-xs font-bold font-mono tabular-nums px-2.5 py-1 rounded-full border transition-colors duration-300 ${riskBadgeStyle}`}>
                   {riskLevel} RISK
                 </span>
               </div>
 
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl sm:text-6xl font-extrabold font-mono tabular-nums text-[#0F172A] tracking-tight">
-                  {riskScore}
+                  {displayScore.toFixed(1)}
                 </span>
                 <span className="text-lg font-medium text-[#64748B]">/ 100</span>
               </div>
@@ -274,7 +296,7 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
                     <span className="font-mono tabular-nums font-semibold text-[#0F172A]">{Math.round(mlScore)}/100 (30%)</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full transition-all duration-300" style={{ width: `${mlScore}%` }} />
+                    <div className="h-full bg-purple-500 rounded-full transition-all duration-500 ease-out" style={{ width: `${mlScore}%` }} />
                   </div>
                 </div>
 
@@ -284,7 +306,7 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
                     <span className="font-mono tabular-nums font-semibold text-[#0F172A]">{Math.round(graphScore)}/100 (20%)</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${graphScore}%` }} />
+                    <div className="h-full bg-blue-500 rounded-full transition-all duration-500 ease-out" style={{ width: `${graphScore}%` }} />
                   </div>
                 </div>
 
@@ -294,7 +316,7 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
                     <span className="font-mono tabular-nums font-semibold text-[#0F172A]">{Math.round(temporalScore)}/100 (20%)</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#D4AF37] rounded-full transition-all duration-300" style={{ width: `${temporalScore}%` }} />
+                    <div className="h-full bg-[#D4AF37] rounded-full transition-all duration-500 ease-out" style={{ width: `${temporalScore}%` }} />
                   </div>
                 </div>
 
@@ -304,7 +326,7 @@ export function StakingCalculator({ onStartInvestigation }: StakingCalculatorPro
                     <span className="font-mono tabular-nums font-semibold text-[#0F172A]">{Math.round(mixerScore)}/100 (15%)</span>
                   </div>
                   <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-rose-500 rounded-full transition-all duration-300" style={{ width: `${mixerScore}%` }} />
+                    <div className="h-full bg-rose-500 rounded-full transition-all duration-500 ease-out" style={{ width: `${mixerScore}%` }} />
                   </div>
                 </div>
               </div>

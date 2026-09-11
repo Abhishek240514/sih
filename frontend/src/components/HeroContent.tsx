@@ -9,7 +9,7 @@ export function HeroContent({ onExploreGraph, onIngestDataset }: HeroContentProp
   return (
     <div className="relative z-10 max-w-4xl mx-auto px-6 flex flex-col items-center justify-center text-center mt-[-40px] md:mt-[-80px]">
       {/* Eyebrow Badge */}
-      <div className="gsap-hero-eyebrow opacity-0 inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-gray-200/80 shadow-xs mb-6 select-none">
+      <div className="gsap-hero-eyebrow opacity-0 inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/85 backdrop-blur-md border border-gray-200/80 shadow-xs mb-6 select-none">
         <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
         <Shield className="w-3.5 h-3.5 text-[#D4AF37]" />
         <span className="text-[11px] font-semibold tracking-wider text-[#64748B] uppercase">
@@ -17,9 +17,18 @@ export function HeroContent({ onExploreGraph, onIngestDataset }: HeroContentProp
         </span>
       </div>
 
-      {/* Main Heading */}
-      <h1 className="gsap-hero-heading opacity-0 text-4xl sm:text-5xl md:text-6xl lg:text-[68px] font-bold tracking-[-0.03em] text-[#0F172A] leading-[1.08] mb-6">
-        Trace <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] via-[#c58528] to-[#9a6316]">Bitcoin</span> Intelligence Across Any UTXO Cluster
+      {/* Main Heading with Masked Line Wrappers */}
+      <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[68px] font-bold tracking-[-0.03em] text-[#0F172A] leading-[1.08] mb-6">
+        <div className="overflow-hidden pb-1">
+          <span className="gsap-hero-line-1 block transform translate-y-full opacity-0">
+            Trace <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#D4AF37] via-[#c58528] to-[#9a6316]">Bitcoin</span> Intelligence
+          </span>
+        </div>
+        <div className="overflow-hidden pb-1">
+          <span className="gsap-hero-line-2 block transform translate-y-full opacity-0">
+            Across Any UTXO Cluster
+          </span>
+        </div>
       </h1>
 
       {/* Sub-headline */}
@@ -27,15 +36,17 @@ export function HeroContent({ onExploreGraph, onIngestDataset }: HeroContentProp
         Ingest raw transaction datasets, correlate network-layer broadcast observations, isolate anomalies with ML, and de-anonymize illicit capital across multi-hop peel chains.
       </p>
 
-      {/* Action Buttons */}
+      {/* Action Buttons with Shine Sweep */}
       <div className="gsap-hero-buttons opacity-0 flex flex-col sm:flex-row items-center justify-center gap-3.5 w-full sm:w-auto">
         <button
           type="button"
           onClick={onExploreGraph}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full font-semibold text-sm text-white bg-gradient-to-r from-[#D4AF37] to-[#c58528] hover:shadow-md hover:shadow-[#D4AF37]/25 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+          className="relative group overflow-hidden w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full font-semibold text-sm text-white bg-gradient-to-r from-[#D4AF37] to-[#c58528] hover:shadow-lg hover:shadow-[#D4AF37]/25 active:scale-[0.98] transition-all duration-200 cursor-pointer"
         >
-          <span>Explore Forensic Graph</span>
-          <ArrowRight className="w-4 h-4" />
+          {/* Subtle Shine Sweep */}
+          <span className="absolute inset-0 w-1/2 h-full bg-white/20 transform -skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-700 ease-out" />
+          <span className="relative z-10">Explore Forensic Graph</span>
+          <ArrowRight className="relative z-10 w-4 h-4 transform group-hover:translate-x-0.5 transition-transform" />
         </button>
 
         <button

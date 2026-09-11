@@ -1,6 +1,6 @@
-import { useRef, useEffect } from 'react';
-import { Layers, Network, Cpu, Wifi, ArrowRight, ShieldCheck, GitFork, Check } from 'lucide-react';
-import { initScrollReveal, initScrollCascade } from '@/lib/animation';
+import { useState, useRef, useEffect } from 'react';
+import { Layers, Network, Cpu, Wifi, ArrowRight, ShieldCheck, GitFork, Check, RotateCcw } from 'lucide-react';
+import { initScrollReveal, initScrollCascade, initPerspectiveCascade, gsap } from '@/lib/animation';
 
 interface ServicesSectionProps {
   onLearnMore?: () => void;
@@ -9,6 +9,9 @@ interface ServicesSectionProps {
 export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
   const containerRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const peelBoxRef = useRef<HTMLDivElement>(null);
+  const [activeHopStep, setActiveHopStep] = useState(3);
+  const [isSimulating, setIsSimulating] = useState(false);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -17,8 +20,39 @@ export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
       initScrollReveal(headerRef.current, undefined, { y: 20, duration: 0.6 });
     }
 
-    initScrollCascade(containerRef.current, '.gsap-service-card', 0.1);
+    initScrollCascade(containerRef.current, '.gsap-service-anchor', 0.1);
+    initPerspectiveCascade(containerRef.current, '.gsap-service-pillar', 0.08);
+
+    // Live sequential peel animation timeline on scroll
+    if (peelBoxRef.current) {
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: peelBoxRef.current,
+          start: 'top 75%',
+          toggleActions: 'play none none none',
+          onEnter: () => replayTrace(),
+        },
+      });
+    }
   }, []);
+
+  const replayTrace = () => {
+    setIsSimulating(true);
+    setActiveHopStep(0);
+
+    const timer1 = setTimeout(() => setActiveHopStep(1), 600);
+    const timer2 = setTimeout(() => setActiveHopStep(2), 1200);
+    const timer3 = setTimeout(() => {
+      setActiveHopStep(3);
+      setIsSimulating(false);
+    }, 1800);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      clearTimeout(timer3);
+    };
+  };
 
   return (
     <section
@@ -43,7 +77,7 @@ export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
       {/* Asymmetrical Layout: Anchor Card + Complementary Pillars */}
       <div className="space-y-6">
         {/* Large Featured Anchor: Peel Chain & Clustering Visualizer */}
-        <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 shadow-sm p-8 lg:p-10 transition-all duration-300 hover:shadow-md hover:border-[#D4AF37]/40">
+        <div className="gsap-service-anchor bg-white rounded-3xl border border-gray-200/90 shadow-sm p-8 lg:p-10 transition-all duration-300 hover:shadow-md hover:border-[#D4AF37]/40">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Narrative */}
             <div className="lg:col-span-6 space-y-5">
@@ -95,45 +129,102 @@ export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
             </div>
 
             {/* Right Live Visual Simulation of Peel Chain */}
-            <div className="lg:col-span-6 bg-[#0F172A] rounded-2xl p-6 text-white border border-gray-800 shadow-inner space-y-4">
+            <div
+              ref={peelBoxRef}
+              className="lg:col-span-6 bg-[#0F172A] rounded-2xl p-6 text-white border border-gray-800 shadow-inner space-y-4 relative overflow-hidden"
+            >
               <div className="flex items-center justify-between pb-3 border-b border-gray-800 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className={`w-2 h-2 rounded-full ${isSimulating ? 'bg-amber-400 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
                   <span className="font-mono text-gray-300">LIVE PEEL RECONSTRUCTION</span>
                 </div>
-                <span className="font-mono text-[11px] text-[#D4AF37]">DARKSIDE • 75.00 BTC</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-[11px] text-[#D4AF37]">DARKSIDE • 75.00 BTC</span>
+                  <button
+                    type="button"
+                    onClick={replayTrace}
+                    disabled={isSimulating}
+                    title="Replay Peel Traversal"
+                    className="p-1 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <RotateCcw className={`w-3 h-3 ${isSimulating ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
               </div>
 
               {/* Hop 1 */}
-              <div className="flex items-center justify-between gap-3 text-xs font-mono">
-                <div className="p-2.5 rounded-lg bg-gray-900 border border-gray-700/60 flex-1">
+              <div
+                className={`flex items-center justify-between gap-3 text-xs font-mono transition-all duration-500 ${
+                  activeHopStep >= 0 ? 'opacity-100 translate-y-0' : 'opacity-30 translate-y-1'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-lg bg-gray-900 border flex-1 transition-all duration-300 ${
+                    activeHopStep >= 0 ? 'border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.15)]' : 'border-gray-700/60'
+                  }`}
+                >
                   <div className="text-gray-400 text-[10px]">HOP 0 (INITIAL EXTORTION)</div>
                   <div className="text-emerald-400 font-bold truncate">bc1q...d98a (75.00 BTC)</div>
                 </div>
-                <GitFork className="w-4 h-4 text-[#D4AF37] shrink-0" />
-                <div className="p-2.5 rounded-lg bg-gray-900/90 border border-gray-700/60 flex-1">
+                <GitFork
+                  className={`w-4 h-4 shrink-0 transition-colors duration-300 ${
+                    activeHopStep >= 1 ? 'text-[#D4AF37]' : 'text-gray-600'
+                  }`}
+                />
+                <div
+                  className={`p-2.5 rounded-lg bg-gray-900/90 border flex-1 transition-all duration-300 ${
+                    activeHopStep >= 1 ? 'border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.15)]' : 'border-gray-700/60'
+                  }`}
+                >
                   <div className="text-gray-400 text-[10px]">BRANCH 1 (PEEL)</div>
                   <div className="text-amber-400 font-bold">11.30 BTC &rarr; Mixer</div>
                 </div>
               </div>
 
               {/* Hop 2 */}
-              <div className="flex items-center justify-between gap-3 text-xs font-mono pl-4 border-l-2 border-[#D4AF37]/40">
-                <div className="p-2.5 rounded-lg bg-gray-900 border border-gray-700/60 flex-1">
+              <div
+                className={`flex items-center justify-between gap-3 text-xs font-mono pl-4 border-l-2 transition-all duration-500 ${
+                  activeHopStep >= 2
+                    ? 'border-[#D4AF37] opacity-100 translate-y-0'
+                    : 'border-gray-800 opacity-30 translate-y-1'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-lg bg-gray-900 border flex-1 transition-all duration-300 ${
+                    activeHopStep >= 2 ? 'border-blue-500/60 shadow-[0_0_12px_rgba(59,130,246,0.15)]' : 'border-gray-700/60'
+                  }`}
+                >
                   <div className="text-gray-400 text-[10px]">HOP 1 (CHANGE ADDRESS)</div>
                   <div className="text-white font-bold truncate">bc1q...x412 (63.70 BTC)</div>
                 </div>
-                <GitFork className="w-4 h-4 text-[#D4AF37] shrink-0" />
-                <div className="p-2.5 rounded-lg bg-gray-900/90 border border-gray-700/60 flex-1">
+                <GitFork
+                  className={`w-4 h-4 shrink-0 transition-colors duration-300 ${
+                    activeHopStep >= 2 ? 'text-[#D4AF37]' : 'text-gray-600'
+                  }`}
+                />
+                <div
+                  className={`p-2.5 rounded-lg bg-gray-900/90 border flex-1 transition-all duration-300 ${
+                    activeHopStep >= 2 ? 'border-amber-500/60 shadow-[0_0_12px_rgba(245,158,11,0.15)]' : 'border-gray-700/60'
+                  }`}
+                >
                   <div className="text-gray-400 text-[10px]">BRANCH 2 (PEEL)</div>
                   <div className="text-amber-400 font-bold">8.40 BTC &rarr; Exchange</div>
                 </div>
               </div>
 
               {/* Hop 3 (Terminal seizure) */}
-              <div className="p-3 rounded-xl bg-amber-950/40 border border-[#D4AF37]/50 flex items-center justify-between text-xs">
+              <div
+                className={`p-3 rounded-xl border flex items-center justify-between text-xs transition-all duration-500 ${
+                  activeHopStep >= 3
+                    ? 'bg-amber-950/40 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.2)] opacity-100 scale-100'
+                    : 'bg-gray-900/50 border-gray-800 opacity-40 scale-[0.99]'
+                }`}
+              >
                 <div>
-                  <div className="text-[#D4AF37] font-semibold text-[11px]">JUDICIAL RECOVERY SEIZURE</div>
+                  <div className="text-[#D4AF37] font-semibold text-[11px] flex items-center gap-1.5">
+                    {activeHopStep >= 3 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+                    <span>JUDICIAL RECOVERY SEIZURE</span>
+                  </div>
                   <div className="text-gray-300 font-mono text-[10px]">U.S. Marshals Service Custody Escrow</div>
                 </div>
                 <span className="font-mono font-bold text-emerald-400 text-sm">63.70 BTC RECOVERED</span>
@@ -145,7 +236,7 @@ export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
         {/* 3 Complementary Specialized Pillars */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Card 1: Isolation Forest ML */}
-          <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
+          <div className="gsap-service-pillar bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600">
                 <Cpu className="w-5 h-5" />
@@ -168,7 +259,7 @@ export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
           </div>
 
           {/* Card 2: P2P Mempool Correlation */}
-          <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
+          <div className="gsap-service-pillar bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600">
                 <Wifi className="w-5 h-5" />
@@ -191,7 +282,7 @@ export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
           </div>
 
           {/* Card 3: Cryptographic Integrity */}
-          <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
+          <div className="gsap-service-pillar bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
             <div className="space-y-4">
               <div className="w-10 h-10 rounded-xl bg-amber-50 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
                 <Layers className="w-5 h-5" />

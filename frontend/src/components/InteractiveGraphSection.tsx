@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Network, ExternalLink, Info, X } from 'lucide-react';
-import { initScrollReveal } from '@/lib/animation';
+import { initScrollReveal, gsap, EASINGS } from '@/lib/animation';
 
 interface InteractiveGraphSectionProps {
   onOpenFullExplorer?: () => void;
@@ -9,6 +9,7 @@ interface InteractiveGraphSectionProps {
 export function InteractiveGraphSection({ onOpenFullExplorer }: InteractiveGraphSectionProps) {
   const containerRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const nodesContainerRef = useRef<HTMLDivElement>(null);
   const [selectedCase, setSelectedCase] = useState<'colonial' | 'chipmixer' | 'hydra'>('colonial');
   const [activeNode, setActiveNode] = useState<any>(null);
 
@@ -17,6 +18,17 @@ export function InteractiveGraphSection({ onOpenFullExplorer }: InteractiveGraph
       initScrollReveal(cardRef.current, undefined, { y: 24, duration: 0.6 });
     }
   }, []);
+
+  // Animate node bloom on case change
+  useEffect(() => {
+    if (nodesContainerRef.current) {
+      gsap.fromTo(
+        nodesContainerRef.current.querySelectorAll('.graph-node-card'),
+        { opacity: 0, scale: 0.88, y: 14 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, stagger: 0.05, ease: EASINGS.expoOut }
+      );
+    }
+  }, [selectedCase]);
 
   const casesData = {
     colonial: {
@@ -285,19 +297,22 @@ export function InteractiveGraphSection({ onOpenFullExplorer }: InteractiveGraph
           </div>
 
           {/* Interactive Nodes Display */}
-          <div className="py-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div ref={nodesContainerRef} className="py-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {current.nodes.map(node => (
               <div
                 key={node.id}
                 onClick={() => setActiveNode(node)}
-                className={`relative group p-4 rounded-2xl bg-white border cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-md flex flex-col items-center text-center ${
+                className={`graph-node-card relative group p-4 rounded-2xl bg-white border cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md flex flex-col items-center text-center ${
                   activeNode?.id === node.id
-                    ? 'border-[#D4AF37] ring-2 ring-[#D4AF37]/30 shadow-sm'
-                    : 'border-gray-200/80'
+                    ? 'border-[#D4AF37] ring-4 ring-[#D4AF37]/20 shadow-md scale-[1.02]'
+                    : 'border-gray-200/80 hover:border-gray-300'
                 }`}
               >
+                {activeNode?.id === node.id && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#D4AF37] animate-ping" />
+                )}
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white mb-2 shadow-xs"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white mb-2 shadow-xs transition-transform duration-300 group-hover:scale-105"
                   style={{ backgroundColor: node.color }}
                 >
                   <Network className="w-5 h-5" />

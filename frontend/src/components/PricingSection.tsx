@@ -1,9 +1,56 @@
-import { useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { FolderOpen, ArrowRight, CheckCircle2, Award } from 'lucide-react';
-import { initScrollReveal, initScrollCascade } from '@/lib/animation';
+import { initScrollReveal, initScrollCascade, tweenNumber, ScrollTrigger } from '@/lib/animation';
 
 interface PricingSectionProps {
   onSelectTier?: () => void;
+}
+
+function SeizureRecoveryMeter({
+  targetRate,
+  seizedBtc,
+  targetBtc,
+}: {
+  targetRate: number;
+  seizedBtc: string;
+  targetBtc: string;
+}) {
+  const [animatedRate, setAnimatedRate] = useState(0);
+  const meterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!meterRef.current) return;
+    const trigger = ScrollTrigger.create({
+      trigger: meterRef.current,
+      start: 'top 85%',
+      onEnter: () => {
+        tweenNumber(0, targetRate, 1.1, (val) => setAnimatedRate(val));
+      },
+      once: true,
+    });
+    return () => trigger.kill();
+  }, [targetRate]);
+
+  return (
+    <div ref={meterRef} className="p-4 rounded-2xl bg-[#FAFAFA] border border-gray-200/80 mb-6 space-y-2.5">
+      <div className="flex justify-between items-baseline text-xs">
+        <span className="text-[#64748B] font-medium">Seizure Recovery Rate</span>
+        <span className="font-mono tabular-nums font-bold text-[#0F172A]">{animatedRate.toFixed(1)}%</span>
+      </div>
+      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-[#D4AF37] to-emerald-500 rounded-full transition-all duration-300 ease-out"
+          style={{ width: `${animatedRate}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-[11px] font-mono tabular-nums text-[#64748B]">
+        <span>
+          Seized: <strong className="text-emerald-700">{seizedBtc}</strong>
+        </span>
+        <span>Target: {targetBtc}</span>
+      </div>
+    </div>
+  );
 }
 
 export function PricingSection({ onSelectTier }: PricingSectionProps) {
@@ -139,22 +186,11 @@ export function PricingSection({ onSelectTier }: PricingSectionProps) {
               </p>
 
               {/* Seizure Progress Meter */}
-              <div className="p-4 rounded-2xl bg-[#FAFAFA] border border-gray-200/80 mb-6 space-y-2.5">
-                <div className="flex justify-between items-baseline text-xs">
-                  <span className="text-[#64748B] font-medium">Seizure Recovery Rate</span>
-                  <span className="font-mono tabular-nums font-bold text-[#0F172A]">{c.recoveryRate}%</span>
-                </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#D4AF37] to-emerald-500 rounded-full"
-                    style={{ width: `${c.recoveryRate}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-[11px] font-mono tabular-nums text-[#64748B]">
-                  <span>Seized: <strong className="text-emerald-700">{c.seizedBtc}</strong></span>
-                  <span>Target: {c.targetBtc}</span>
-                </div>
-              </div>
+              <SeizureRecoveryMeter
+                targetRate={c.recoveryRate}
+                seizedBtc={c.seizedBtc}
+                targetBtc={c.targetBtc}
+              />
 
               {/* Investigator Tag */}
               <div className="mb-6 pb-6 border-b border-gray-100 text-xs">

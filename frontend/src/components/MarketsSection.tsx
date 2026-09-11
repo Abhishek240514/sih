@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, ShieldAlert, ArrowUpRight, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
-import { initScrollReveal } from '@/lib/animation';
+import { initScrollReveal, gsap, EASINGS } from '@/lib/animation';
 
 interface MarketsSectionProps {
   onInspectGraph?: () => void;
@@ -10,6 +10,7 @@ interface MarketsSectionProps {
 export function MarketsSection({ onInspectGraph }: MarketsSectionProps) {
   const containerRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const tableBodyRef = useRef<HTMLTableSectionElement>(null);
 
   const [activeTab, setActiveTab] = useState<'all' | 'ransomware' | 'mixers' | 'peel' | 'sanctions'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,6 +21,17 @@ export function MarketsSection({ onInspectGraph }: MarketsSectionProps) {
       initScrollReveal(cardRef.current, undefined, { y: 24, duration: 0.6 });
     }
   }, []);
+
+  // Directional stagger entrance on tab or search switch
+  useEffect(() => {
+    if (tableBodyRef.current) {
+      gsap.fromTo(
+        tableBodyRef.current.querySelectorAll('.gsap-triage-row'),
+        { opacity: 0, x: -8 },
+        { opacity: 1, x: 0, duration: 0.3, stagger: 0.03, ease: EASINGS.power3Out }
+      );
+    }
+  }, [activeTab, searchQuery]);
 
   const leads = [
     {
@@ -168,7 +180,9 @@ export function MarketsSection({ onInspectGraph }: MarketsSectionProps) {
         </div>
 
         {/* Table Container */}
-        <div className="overflow-x-auto border border-gray-200/80 rounded-2xl bg-white">
+        <div className="relative overflow-x-auto border border-gray-200/80 rounded-2xl bg-white shadow-xs">
+          {/* Subtle gold scanline accent */}
+          <div className="h-[2px] w-full bg-gradient-to-r from-transparent via-[#D4AF37]/60 to-transparent" />
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-[#FAFAFA] border-b border-gray-200 text-[#64748B] font-semibold text-[11px] uppercase tracking-wider">
@@ -180,9 +194,9 @@ export function MarketsSection({ onInspectGraph }: MarketsSectionProps) {
                 <th className="py-3.5 px-5 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody ref={tableBodyRef} className="divide-y divide-gray-100">
               {filteredLeads.map(lead => (
-                <tr key={lead.id} className="hover:bg-amber-50/20 transition-colors group">
+                <tr key={lead.id} className="gsap-triage-row hover:bg-amber-50/20 transition-colors group">
                   <td className="py-4 px-5">
                     <div className="font-bold text-[#0F172A] group-hover:text-[#D4AF37] transition-colors">
                       {lead.name}
