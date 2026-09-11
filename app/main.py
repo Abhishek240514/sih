@@ -12,6 +12,7 @@ from app.core.exceptions import (
     general_exception_handler,
 )
 from app.db.database import init_db
+from app.ml.anomaly_detector import anomaly_detector
 from app.api.routes import (
     health, datasets, investigations, alerts, entities,
     transactions, graph, ml, dashboard,
@@ -26,6 +27,23 @@ async def lifespan(app: FastAPI):
     
     init_db()
     logger.info("Database initialized")
+    
+    # Load ML model if exists
+    if anomaly_detector.load():
+        logger.info(f"ML model loaded: trained at {anomaly_detector.trained_at}")
+    else:
+        logger.info("No trained ML model found, will train on first dataset")
+    
+    # Auto-ingest generated CSV data if available
+    try:
+        from app.services.csv_ingestion import auto_ingest_sample_data
+        dataset_id = auto_ingest_sample_data()
+        if dataset_id:
+            logger.info(f"Auto-ingested sample data as dataset: {dataset_id}")
+        else:
+            logger.info("No generated CSVs to auto-ingest (run: python scripts/generate_forensic_csvs.py)")
+    except Exception as e:
+        logger.warning(f"Auto-ingestion skipped: {e}")
     
     yield
     

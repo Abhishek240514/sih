@@ -107,6 +107,9 @@ async def predict_anomalies(
     if not anomaly_detector.is_trained:
         raise ModelNotTrainedError()
     
+    wallet_features = {}
+    wallet_ids = []
+    
     with get_db_session() as db:
         dataset_repo = DatasetRepository(db)
         dataset = dataset_repo.get(dataset_id)
@@ -115,15 +118,15 @@ async def predict_anomalies(
         
         wallet_repo = WalletRepository(db)
         wallets = wallet_repo.get_by_dataset(dataset_id)
+        
+        if not wallets:
+            raise ProcessingError("No wallets found in dataset")
+        
+        for w in wallets:
+            wallet_features[w.address] = w.features or {}
+            wallet_ids.append(w.address)
     
-    if not wallets:
-        raise ProcessingError("No wallets found in dataset")
-    
-    wallet_features = {}
-    for w in wallets:
-        wallet_features[w.address] = w.features or {}
-    
-    matrix, wallet_ids, feature_names = feature_engineering_service.build_feature_matrix(
+    matrix, _, feature_names = feature_engineering_service.build_feature_matrix(
         {k: type('WalletFeatures', (), v)() for k, v in wallet_features.items()}
     )
     

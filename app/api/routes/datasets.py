@@ -47,6 +47,7 @@ async def upload_dataset(
         )
         dataset.id = dataset_id
         db.flush()
+        created_at = dataset.created_at
     
     background_tasks.add_task(process_dataset_background, dataset_id, content, filename)
     
@@ -61,7 +62,7 @@ async def upload_dataset(
         invalid_records=0,
         duplicates=0,
         warnings=[],
-        created_at=dataset.created_at,
+        created_at=created_at,
     )
 
 
