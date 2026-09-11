@@ -1,15 +1,33 @@
-import { Shield, FileCheck2, Printer } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import { Shield, FileCheck2, Printer, CheckCircle2, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { initScrollReveal } from '@/lib/animation';
 
 export function AppShowcase() {
-  const handleExportMock = () => {
-    toast.success('Dispatched Court-Admissible Dossier PDF to print preview');
+  const containerRef = useRef<HTMLElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (cardRef.current) {
+      initScrollReveal(cardRef.current, undefined, { y: 24, duration: 0.65 });
+    }
+  }, []);
+
+  const handleExportPDF = () => {
+    toast.success('Generated Court-Admissible Dossier PDF (Exhibit 4A) with SHA-256 Seal');
+  };
+
+  const handleExportXML = () => {
+    toast.success('Compiled FinCEN SAR XML Package ready for BSA E-Filing');
   };
 
   return (
-    <section className="py-20 max-w-7xl mx-auto px-6 lg:px-8">
-      <div className="relative bg-[#0F172A] text-white rounded-3xl p-8 sm:p-14 lg:p-16 overflow-hidden shadow-2xl">
-        {/* Gold glow accent in background */}
+    <section ref={containerRef} className="py-20 max-w-7xl mx-auto px-6 lg:px-8 select-none">
+      <div
+        ref={cardRef}
+        className="relative bg-[#0F172A] text-white rounded-3xl p-8 sm:p-12 lg:p-16 overflow-hidden shadow-2xl"
+      >
+        {/* Subtle gold ambient glow in background */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#D4AF37]/15 rounded-full blur-3xl pointer-events-none -mr-32 -mt-32" />
 
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -20,8 +38,8 @@ export function AppShowcase() {
               <span>Evidentiary Export Engine</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-              One-Click Court Dossiers & FinCEN SAR Exports
+            <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-bold tracking-tight leading-[1.15]">
+              One-Click Judicial Affidavits & FinCEN SAR Filing Bundles
             </h2>
 
             <p className="text-sm sm:text-base text-gray-300 leading-relaxed">
@@ -30,33 +48,42 @@ export function AppShowcase() {
 
             <div className="space-y-3 pt-2">
               <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-200">
-                <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0F172A] shrink-0 font-bold">
+                <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0F172A] shrink-0 font-bold text-xs">
                   ✓
                 </div>
                 <span>Title 18 § 981 Civil Forfeiture Complaint Packages</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-200">
-                <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0F172A] shrink-0 font-bold">
+                <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0F172A] shrink-0 font-bold text-xs">
                   ✓
                 </div>
                 <span>Cryptographic SHA-256 Chain-of-Custody Signatures</span>
               </div>
               <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-200">
-                <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0F172A] shrink-0 font-bold">
+                <div className="w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center text-[#0F172A] shrink-0 font-bold text-xs">
                   ✓
                 </div>
                 <span>FinCEN Form 111 XML Suspicious Activity Filing</span>
               </div>
             </div>
 
-            <div className="pt-4 flex flex-wrap gap-4">
+            <div className="pt-3 flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={handleExportMock}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full text-xs font-semibold text-[#0F172A] bg-gradient-to-r from-[#D4AF37] to-[#c58528] hover:shadow-lg hover:shadow-[#D4AF37]/30 transition-all cursor-pointer"
+                onClick={handleExportPDF}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-[#0F172A] bg-gradient-to-r from-[#D4AF37] to-[#c58528] hover:shadow-md hover:shadow-[#D4AF37]/25 active:scale-[0.98] transition-all cursor-pointer"
               >
                 <Printer className="w-4 h-4" />
-                <span>Export Formal Dossier PDF</span>
+                <span>Export Dossier PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportXML}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold text-white bg-white/10 hover:bg-white/20 border border-white/20 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                <span>FinCEN XML Bundle</span>
               </button>
             </div>
           </div>
@@ -71,12 +98,12 @@ export function AppShowcase() {
               <span className="text-[#D4AF37] font-bold">VERIFIED SEAL</span>
             </div>
 
-            <div className="space-y-2 text-[11px] leading-relaxed">
+            <div className="space-y-2.5 text-[11px] leading-relaxed">
               <div className="text-gray-400">CASE DOCKET: CASE-2024-DARKSIDE</div>
               <div className="text-white font-semibold font-sans text-sm">
                 In re: Seizure of 63.70000000 Bitcoin from Suspect Extortion Cluster
               </div>
-              <div className="p-3 bg-black/40 rounded border border-white/10 text-gray-300 text-[10px] space-y-1">
+              <div className="p-3.5 bg-black/40 rounded-xl border border-white/10 text-gray-300 text-[10px] space-y-1.5 tabular-nums">
                 <div>TARGET SEED: 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</div>
                 <div>TERMINAL VASP: Garantex Europe (Sanctioned SDN)</div>
                 <div>PEEL DEPTH: 14 Consecutive 1-in-2-out Layering Outputs</div>
@@ -86,7 +113,10 @@ export function AppShowcase() {
 
             <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-gray-400">
               <span>Status: Court-Admissible Exhibit 4A</span>
-              <span className="text-emerald-400 font-semibold">100% Validated</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                100% Validated
+              </span>
             </div>
           </div>
         </div>

@@ -1,108 +1,228 @@
-import { Layers, Network, Cpu, Wifi, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import { Layers, Network, Cpu, Wifi, ArrowRight, ShieldCheck, GitFork, Check } from 'lucide-react';
+import { initScrollReveal, initScrollCascade } from '@/lib/animation';
 
 interface ServicesSectionProps {
   onLearnMore?: () => void;
 }
 
 export function ServicesSection({ onLearnMore }: ServicesSectionProps) {
-  const pillars = [
-    {
-      icon: Layers,
-      title: 'Multi-Input Common Spend Clustering',
-      badge: 'HEURISTIC 1',
-      description:
-        'Identifies shared private key control across disparate transaction inputs, aggregating millions of raw UTXOs into coherent suspect clusters with explainable confidence ratings.',
-      metrics: ['99.4% Clustering Precision', 'Co-spend Address Synthesis', 'Change Heuristic Validation'],
-    },
-    {
-      icon: Network,
-      title: 'Multi-Hop Peel Chain Extraction',
-      badge: 'HEURISTIC 2',
-      description:
-        'Automated traversal of rapid 1-in-2-out micro-dispersal patterns characteristic of ransomware extortion, tracing peeling branches up to 25 blocks deep to the terminal cash-out point.',
-      metrics: ['Sub-second Recursion', 'Change vs Payment Disambiguation', 'Terminal VASP Detection'],
-    },
-    {
-      icon: Cpu,
-      title: 'Isolation Forest ML Anomaly Engine',
-      badge: 'ML LAYER',
-      description:
-        'Unsupervised statistical outlier scoring extracting 22-dimensional behavioral vectors across transaction frequency, fan-out degree, value skew, and temporal variance.',
-      metrics: ['22 Feature Vectors', 'Unsupervised Outlier Ranking', 'SHAP-equivalent Explainability'],
-    },
-    {
-      icon: Wifi,
-      title: 'Network-Layer P2P IP Correlation',
-      badge: 'TELEMETRY LAYER',
-      description:
-        'Maps Bitcoin peer-to-peer mempool broadcast propagation timing, port 8333 listeners, and autonomous system numbers (ASNs) directly against on-chain transaction hashes.',
-      metrics: ['Timing Window Correlation', 'GeoIP & ASN Resolution', 'Evidence Hash Verification'],
-    },
-  ];
+  const containerRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    if (headerRef.current) {
+      initScrollReveal(headerRef.current, undefined, { y: 20, duration: 0.6 });
+    }
+
+    initScrollCascade(containerRef.current, '.gsap-service-card', 0.1);
+  }, []);
 
   return (
-    <section id="services" className="py-24 max-w-7xl mx-auto px-6 lg:px-8">
+    <section
+      ref={containerRef}
+      id="services"
+      className="py-24 max-w-7xl mx-auto px-6 lg:px-8 select-none"
+    >
       {/* Section Header */}
-      <div className="text-center max-w-3xl mx-auto mb-16">
+      <div ref={headerRef} className="max-w-3xl mb-16">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-semibold uppercase tracking-wider mb-4">
-          <span>Core Capabilities</span>
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>Forensic Engine Architecture</span>
         </div>
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#0F172A] mb-4">
-          Architected for Sovereign Forensic Intelligence
+        <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-bold tracking-tight text-[#0F172A] leading-[1.15] mb-4">
+          Engineered for Sovereign Blockchain Forensic Investigations
         </h2>
         <p className="text-base sm:text-lg text-[#64748B] leading-relaxed">
-          Engineered to satisfy federal evidentiary standards, delivering cryptographic proof of illicit cryptocurrency flows without relying on proprietary cloud black boxes.
+          Deterministic heuristics and unsupervised machine learning models assembled to satisfy Title 18 U.S.C. evidentiary thresholds, without proprietary black boxes or external cloud leakage.
         </p>
       </div>
 
-      {/* 4 Pillars Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {pillars.map((pillar, idx) => {
-          const Icon = pillar.icon;
-          return (
-            <div
-              key={idx}
-              className="relative group bg-white/80 backdrop-blur-md border border-gray-200/80 rounded-2xl p-8 hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-[#FAFAFA] border border-gray-200 flex items-center justify-center text-[#D4AF37] group-hover:bg-gradient-to-r group-hover:from-[#D4AF37] group-hover:to-[#c58528] group-hover:text-white transition-all duration-300 shadow-xs">
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded-full bg-gray-100 text-[#64748B] group-hover:bg-amber-50 group-hover:text-[#D4AF37] transition-colors">
-                    {pillar.badge}
-                  </span>
+      {/* Asymmetrical Layout: Anchor Card + Complementary Pillars */}
+      <div className="space-y-6">
+        {/* Large Featured Anchor: Peel Chain & Clustering Visualizer */}
+        <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 shadow-sm p-8 lg:p-10 transition-all duration-300 hover:shadow-md hover:border-[#D4AF37]/40">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Narrative */}
+            <div className="lg:col-span-6 space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                  <Network className="w-5 h-5" />
                 </div>
-
-                <h3 className="text-xl font-bold text-[#0F172A] mb-3 group-hover:text-[#D4AF37] transition-colors">
-                  {pillar.title}
-                </h3>
-
-                <p className="text-sm text-[#64748B] leading-relaxed mb-6">
-                  {pillar.description}
-                </p>
+                <div>
+                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-gray-100 text-[#64748B]">
+                    CORE ALGORITHM 01 & 02
+                  </span>
+                  <h3 className="text-2xl font-bold text-[#0F172A] mt-1">
+                    Multi-Hop Peel Chain & Co-Spend Clustering
+                  </h3>
+                </div>
               </div>
 
-              <div className="pt-6 border-t border-gray-100 space-y-2">
-                {pillar.metrics.map((m, mIdx) => (
-                  <div key={mIdx} className="flex items-center text-xs font-medium text-[#0F172A]/90 gap-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-                    <span>{m}</span>
-                  </div>
-                ))}
+              <p className="text-sm text-[#64748B] leading-relaxed">
+                Automated graph recursion traversing 1-in-2-out micro-dispersals characteristic of ransomware payouts. Disambiguates change addresses using decimal matching, round-number heuristic rules, and co-spending patterns up to 25 hops deep.
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div className="p-3.5 rounded-xl bg-[#FAFAFA] border border-gray-200/80">
+                  <div className="text-[11px] font-medium text-[#64748B] uppercase tracking-wide">Clustering Precision</div>
+                  <div className="text-xl font-bold font-mono tabular-nums text-[#0F172A] mt-0.5">99.42%</div>
+                  <div className="text-[11px] text-emerald-600 font-medium mt-0.5">Zero false merge target</div>
+                </div>
+                <div className="p-3.5 rounded-xl bg-[#FAFAFA] border border-gray-200/80">
+                  <div className="text-[11px] font-medium text-[#64748B] uppercase tracking-wide">Recursion Depth</div>
+                  <div className="text-xl font-bold font-mono tabular-nums text-[#0F172A] mt-0.5">25 Hops</div>
+                  <div className="text-[11px] text-[#D4AF37] font-medium mt-0.5">Sub-second traversal</div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0F172A]/80 bg-gray-50 border border-gray-200/70 px-3 py-1 rounded-full">
+                  <Check className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  Common Spend Attribution
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0F172A]/80 bg-gray-50 border border-gray-200/70 px-3 py-1 rounded-full">
+                  <Check className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  Change Address Disambiguation
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[#0F172A]/80 bg-gray-50 border border-gray-200/70 px-3 py-1 rounded-full">
+                  <Check className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  Terminal VASP Attributions
+                </span>
               </div>
             </div>
-          );
-        })}
+
+            {/* Right Live Visual Simulation of Peel Chain */}
+            <div className="lg:col-span-6 bg-[#0F172A] rounded-2xl p-6 text-white border border-gray-800 shadow-inner space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-gray-800 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="font-mono text-gray-300">LIVE PEEL RECONSTRUCTION</span>
+                </div>
+                <span className="font-mono text-[11px] text-[#D4AF37]">DARKSIDE • 75.00 BTC</span>
+              </div>
+
+              {/* Hop 1 */}
+              <div className="flex items-center justify-between gap-3 text-xs font-mono">
+                <div className="p-2.5 rounded-lg bg-gray-900 border border-gray-700/60 flex-1">
+                  <div className="text-gray-400 text-[10px]">HOP 0 (INITIAL EXTORTION)</div>
+                  <div className="text-emerald-400 font-bold truncate">bc1q...d98a (75.00 BTC)</div>
+                </div>
+                <GitFork className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                <div className="p-2.5 rounded-lg bg-gray-900/90 border border-gray-700/60 flex-1">
+                  <div className="text-gray-400 text-[10px]">BRANCH 1 (PEEL)</div>
+                  <div className="text-amber-400 font-bold">11.30 BTC &rarr; Mixer</div>
+                </div>
+              </div>
+
+              {/* Hop 2 */}
+              <div className="flex items-center justify-between gap-3 text-xs font-mono pl-4 border-l-2 border-[#D4AF37]/40">
+                <div className="p-2.5 rounded-lg bg-gray-900 border border-gray-700/60 flex-1">
+                  <div className="text-gray-400 text-[10px]">HOP 1 (CHANGE ADDRESS)</div>
+                  <div className="text-white font-bold truncate">bc1q...x412 (63.70 BTC)</div>
+                </div>
+                <GitFork className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                <div className="p-2.5 rounded-lg bg-gray-900/90 border border-gray-700/60 flex-1">
+                  <div className="text-gray-400 text-[10px]">BRANCH 2 (PEEL)</div>
+                  <div className="text-amber-400 font-bold">8.40 BTC &rarr; Exchange</div>
+                </div>
+              </div>
+
+              {/* Hop 3 (Terminal seizure) */}
+              <div className="p-3 rounded-xl bg-amber-950/40 border border-[#D4AF37]/50 flex items-center justify-between text-xs">
+                <div>
+                  <div className="text-[#D4AF37] font-semibold text-[11px]">JUDICIAL RECOVERY SEIZURE</div>
+                  <div className="text-gray-300 font-mono text-[10px]">U.S. Marshals Service Custody Escrow</div>
+                </div>
+                <span className="font-mono font-bold text-emerald-400 text-sm">63.70 BTC RECOVERED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3 Complementary Specialized Pillars */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card 1: Isolation Forest ML */}
+          <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-gray-100 text-[#64748B]">
+                ML ENGINE
+              </span>
+              <h4 className="text-lg font-bold text-[#0F172A]">
+                Isolation Forest Anomaly Scoring
+              </h4>
+              <p className="text-xs text-[#64748B] leading-relaxed">
+                Extracts 22-dimensional topological and temporal features from every transaction. Identifies sudden fan-out explosions, value skew, and peel structuring without supervision.
+              </p>
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-gray-100 flex justify-between items-center text-xs font-mono tabular-nums">
+              <span className="text-gray-500">Feature Dimensions</span>
+              <span className="font-bold text-[#0F172A]">22 Behavioral Features</span>
+            </div>
+          </div>
+
+          {/* Card 2: P2P Mempool Correlation */}
+          <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600">
+                <Wifi className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-gray-100 text-[#64748B]">
+                NETWORK TELEMETRY
+              </span>
+              <h4 className="text-lg font-bold text-[#0F172A]">
+                P2P Mempool Propagation Timing
+              </h4>
+              <p className="text-xs text-[#64748B] leading-relaxed">
+                Correlates transaction broadcast arrival times across distributed Bitcoin nodes, pinpointing initial broadcast nodes, ASNs, and bulletproof proxy relays before blockchain inclusion.
+              </p>
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-gray-100 flex justify-between items-center text-xs font-mono tabular-nums">
+              <span className="text-gray-500">Latency Resolution</span>
+              <span className="font-bold text-blue-600">&lt; 420ms Delta</span>
+            </div>
+          </div>
+
+          {/* Card 3: Cryptographic Integrity */}
+          <div className="gsap-service-card bg-white rounded-3xl border border-gray-200/90 p-7 shadow-xs hover:shadow-md hover:border-[#D4AF37]/40 transition-all duration-300 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37]">
+                <Layers className="w-5 h-5" />
+              </div>
+              <span className="text-[10px] font-mono font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-gray-100 text-[#64748B]">
+                EVIDENTIARY AUDIT
+              </span>
+              <h4 className="text-lg font-bold text-[#0F172A]">
+                Cryptographic Chain of Custody
+              </h4>
+              <p className="text-xs text-[#64748B] leading-relaxed">
+                Every heuristic extraction and cluster expansion generates an immutable SHA-256 audit entry. Complies with Federal Rules of Evidence 902(13)/(14) for self-authenticating digital records.
+              </p>
+            </div>
+
+            <div className="pt-6 mt-6 border-t border-gray-100 flex justify-between items-center text-xs font-mono tabular-nums">
+              <span className="text-gray-500">Legal Compliance</span>
+              <span className="font-bold text-[#D4AF37]">Title 18 § 981</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Learn More Link */}
       <div className="mt-12 text-center">
         <button
+          type="button"
           onClick={onLearnMore}
           className="inline-flex items-center gap-2 text-sm font-semibold text-[#D4AF37] hover:text-[#c58528] transition-colors cursor-pointer group"
         >
-          <span>Review our mathematical risk scoring framework</span>
+          <span>Explore our mathematical risk decomposition model</span>
           <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
         </button>
       </div>

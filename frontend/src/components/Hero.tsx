@@ -37,13 +37,13 @@ export function Hero({ onOpenWorkstation, onExploreGraph, onIngestDataset }: Her
       gsap.set('.gsap-hero-paragraph', { y: 48, opacity: 0 });
       gsap.set('.gsap-hero-buttons', { y: 48, opacity: 0 });
 
-      const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1 } });
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 0.7 } });
 
-      tl.to(headerRef.current, { y: 0, opacity: 1, duration: 1 }, 0.2)
-        .to('.gsap-hero-eyebrow', { y: 0, opacity: 1, duration: 1 }, 0.3)
-        .to('.gsap-hero-heading', { y: 0, opacity: 1, duration: 1 }, 0.4)
-        .to('.gsap-hero-paragraph', { y: 0, opacity: 1, duration: 1 }, 0.5)
-        .to('.gsap-hero-buttons', { y: 0, opacity: 1, duration: 1 }, 0.6);
+      tl.to(headerRef.current, { y: 0, opacity: 1, duration: 0.6 }, 0.1)
+        .to('.gsap-hero-eyebrow', { y: 0, opacity: 1, duration: 0.6 }, 0.2)
+        .to('.gsap-hero-heading', { y: 0, opacity: 1, duration: 0.7 }, 0.3)
+        .to('.gsap-hero-paragraph', { y: 0, opacity: 1, duration: 0.7 }, 0.42)
+        .to('.gsap-hero-buttons', { y: 0, opacity: 1, duration: 0.65 }, 0.54);
     }, containerRef);
 
     return () => ctx.revert();

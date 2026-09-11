@@ -6,8 +6,8 @@
   --color-brand-secondary: #64748B;
   --color-brand-accent: #D4AF37;
   --color-brand-accent-hover: #c58528;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Outfit', sans-serif;
+  --font-sans: 'General Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'General Sans', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
@@ -15,10 +15,15 @@
   body {
     background-color: #FAFAFA;
     color: #0F172A;
-    font-family: 'Inter', sans-serif;
+    font-family: 'General Sans', 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -29,6 +34,45 @@
   scrollbar-width: none;
 }
 
+/* Custom Sleek Gold Range Slider */
+input[type="range"].gold-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: #E2E8F0;
+  height: 4px;
+  border-radius: 9999px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+input[type="range"].gold-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #D4AF37;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.4);
+  border: 2px solid #FFFFFF;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="range"].gold-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 3px 10px rgba(212, 175, 55, 0.6);
+}
+
+input[type="range"].gold-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #D4AF37;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(212, 175, 55, 0.4);
+  border: 2px solid #FFFFFF;
+}
+
 @keyframes ticker {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -37,7 +81,7 @@
 .animate-ticker {
   display: flex;
   width: max-content;
-  animation: ticker 35s linear infinite;
+  animation: ticker 38s linear infinite;
 }
 
 .animate-ticker:hover {

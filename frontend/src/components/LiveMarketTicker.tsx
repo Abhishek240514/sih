@@ -62,11 +62,10 @@ export function LiveMarketTicker({ onSelectMetric }: LiveMarketTickerProps) {
     },
   ];
 
-  // Repeat for continuous marquee
   const displayItems = [...telemetryItems, ...telemetryItems];
 
   return (
-    <div className="relative w-full bg-white/80 backdrop-blur-md border-y border-gray-200/80 overflow-hidden py-3 select-none">
+    <div className="relative w-full bg-white/90 backdrop-blur-md border-y border-gray-200/80 overflow-hidden py-3 select-none">
       <div className="flex animate-ticker whitespace-nowrap">
         {displayItems.map((item, idx) => {
           const Icon = item.icon;
@@ -74,25 +73,25 @@ export function LiveMarketTicker({ onSelectMetric }: LiveMarketTickerProps) {
             <div
               key={idx}
               onClick={() => onSelectMetric?.(item.id)}
-              className="inline-flex items-center space-x-3 px-6 cursor-pointer group transition-opacity hover:opacity-80 border-r border-gray-200/60"
+              className="inline-flex items-center gap-3.5 px-6 cursor-pointer group transition-opacity hover:opacity-80 border-r border-gray-200/60"
             >
-              <div className="w-8 h-8 rounded-full bg-[#FAFAFA] border border-gray-200 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Icon className={`w-4 h-4 ${item.color}`} />
+              <div className="w-8 h-8 rounded-full bg-[#FAFAFA] border border-gray-200/80 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200">
+                <Icon className={`w-3.5 h-3.5 ${item.color}`} />
               </div>
               <div className="text-left leading-tight">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 mb-0.5">
                   <span className="text-[10px] font-semibold tracking-wider uppercase text-[#64748B]">
                     {item.label}
                   </span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-50 text-[#D4AF37] border border-[#D4AF37]/20">
+                  <span className="text-[10px] font-mono tabular-nums font-bold px-1.5 py-0.5 rounded bg-amber-50 text-[#D4AF37] border border-[#D4AF37]/20">
                     {item.trend}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-sm font-bold font-mono text-[#0F172A]">
+                  <span className="text-xs sm:text-sm font-semibold font-mono tabular-nums text-[#0F172A]">
                     {item.value}
                   </span>
-                  <span className="text-[11px] text-[#64748B] font-mono">
+                  <span className="text-[11px] text-[#64748B] font-mono tabular-nums">
                     {item.sub}
                   </span>
                 </div>
