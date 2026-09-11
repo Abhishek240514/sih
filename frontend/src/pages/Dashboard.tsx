@@ -76,7 +76,13 @@ export default function Dashboard() {
   const riskData = riskQuery.data?.distribution
     ? Object.entries(riskQuery.data.distribution).map(([name, value]) => ({ name, value }))
     : [];
-  const volumeData = volumeQuery.data?.volume || [];
+  const volumeData = (volumeQuery.data?.volume || []).map((v: any) => {
+    const d = new Date(v.timestamp);
+    return {
+      ...v,
+      bucket: `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+    };
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -199,7 +205,7 @@ export default function Dashboard() {
                     color: '#f1f5f9',
                   }}
                 />
-                <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#volumeGradient)" />
+                <Area type="monotone" dataKey="volume" stroke="#3b82f6" strokeWidth={2} fill="url(#volumeGradient)" name="Volume (BTC)" />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
