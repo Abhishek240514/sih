@@ -88,7 +88,10 @@ async def get_investigation(
         )
         
         wallet_objs = []
-        for addr in investigation.get("related_wallets", []):
+        wallet_addresses = set(investigation.get("related_wallets", []))
+        wallet_addresses.add(entity_id)
+        
+        for addr in wallet_addresses:
             w = wallet_repo.get_by_address(dataset_id, addr)
             if w:
                 wallet_objs.append(Wallet(
