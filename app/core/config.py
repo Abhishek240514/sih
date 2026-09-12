@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     models_dir: Path = BASE_DIR / "data" / "models"
     sample_data_dir: Path = BASE_DIR / "data" / "sample"
     
-    max_upload_size: int = 100 * 1024 * 1024
+    max_upload_size: int = 1024 * 1024 * 1024  # 1GB limit
     allowed_extensions: set = {".csv", ".json", ".xml"}
     
     ml_model_path: Path = BASE_DIR / "data" / "models" / "anomaly_detector.joblib"
