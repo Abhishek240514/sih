@@ -145,6 +145,39 @@ async def parse_csv_bytes(content: bytes) -> List[NormalizedTransaction]:
             keep_default_na=False,
             na_values=["", "NA", "N/A", "null", "NULL", "None"],
         )
+        # Check if it's a raw Elliptic dataset file
+        if len(df.columns) > 100:
+            # Features file
+            df = pd.read_csv(
+                io.BytesIO(content),
+                dtype=str,
+                header=None,
+                keep_default_na=False,
+                na_values=["", "NA", "N/A", "null", "NULL", "None"],
+            )
+            df.rename(columns={0: 'txid'}, inplace=True)
+            df['timestamp'] = df[1].astype(int) * 3600 * 24 + 1700000000
+            df['input_addresses'] = df['txid'].apply(lambda x: f"wallet_{x}")
+            df['output_addresses'] = df['txid'].apply(lambda x: f"wallet_{x}")
+            df['input_amounts'] = "1.0"
+            df['output_amounts'] = "1.0"
+        elif len(df.columns) == 2 and 'txId1' in df.columns and 'txId2' in df.columns:
+            # Edgelist file
+            df.rename(columns={'txId1': 'txid'}, inplace=True)
+            df['timestamp'] = 1700000000
+            df['input_addresses'] = df['txid'].apply(lambda x: f"wallet_{x}")
+            df['output_addresses'] = df['txId2'].apply(lambda x: f"wallet_{x}")
+            df['input_amounts'] = "1.0"
+            df['output_amounts'] = "1.0"
+        elif len(df.columns) == 2 and 'class' in df.columns:
+            # Classes file
+            df.rename(columns={'txId': 'txid'}, inplace=True)
+            df['timestamp'] = 1700000000
+            df['input_addresses'] = df['txid'].apply(lambda x: f"wallet_{x}")
+            df['output_addresses'] = df['txid'].apply(lambda x: f"wallet_{x}")
+            df['input_amounts'] = "1.0"
+            df['output_amounts'] = "1.0"
+            
         return parse_csv_dataframe(df)
     except Exception as e:
         logger.error(f"Failed to parse CSV bytes: {e}")
