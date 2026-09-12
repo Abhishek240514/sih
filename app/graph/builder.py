@@ -40,7 +40,7 @@ class GraphBuilder:
                 self.graph.add_node(
                     tx_id,
                     type="transaction",
-                    label=tx.txid[:16] + "...",
+                    label=tx.txid,
                     txid=tx.txid,
                     timestamp=tx.timestamp.isoformat(),
                     input_amount=tx.input_amount,
@@ -58,7 +58,7 @@ class GraphBuilder:
                     self.graph.add_node(
                         wallet_id,
                         type="wallet",
-                        label=addr[:16] + "...",
+                        label=addr,
                         address=addr,
                         risk_score=risk_score,
                         transaction_count=wf.get("transaction_count", 0) if isinstance(wf, dict) else getattr(wf, "transaction_count", 0),
@@ -83,7 +83,7 @@ class GraphBuilder:
                     self.graph.add_node(
                         wallet_id,
                         type="wallet",
-                        label=addr[:16] + "...",
+                        label=addr,
                         address=addr,
                         risk_score=risk_score,
                         transaction_count=wf.get("transaction_count", 0) if isinstance(wf, dict) else getattr(wf, "transaction_count", 0),
