@@ -1,17 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Download, X } from 'lucide-react';
+import { Search, Filter, Download, X, AlertTriangle } from 'lucide-react';
 import { useAlerts } from '@/hooks/useAlerts';
 import { useDataset } from '@/context/DatasetContext';
 import { RiskBadge } from '@/components/shared/RiskBadge';
 import { TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { truncateAddress, formatRiskScore, formatTimestamp, cn, toCSV, downloadFile } from '@/lib/utils';
+import { truncateAddress, formatRiskScore, formatTimestamp, toCSV, downloadFile } from '@/lib/utils';
 import type { RiskLevel } from '@/lib/types';
 
 const RISK_LEVELS: RiskLevel[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
 const PAGE_SIZE = 20;
+
+const RISK_FILTER_COLORS: Record<string, { active: string; bg: string; border: string }> = {
+  CRITICAL: { active: '#ff3d55', bg: 'rgba(255,61,85,0.12)', border: 'rgba(255,61,85,0.25)' },
+  HIGH: { active: '#ff8c00', bg: 'rgba(255,140,0,0.12)', border: 'rgba(255,140,0,0.25)' },
+  MEDIUM: { active: '#fbbf24', bg: 'rgba(251,191,36,0.12)', border: 'rgba(251,191,36,0.25)' },
+  LOW: { active: '#10d98a', bg: 'rgba(16,217,138,0.10)', border: 'rgba(16,217,138,0.22)' },
+};
 
 export default function Alerts() {
   const navigate = useNavigate();
@@ -22,12 +29,14 @@ export default function Alerts() {
   const [showFilters, setShowFilters] = useState(false);
 
   const alertsQuery = useAlerts(page * PAGE_SIZE, PAGE_SIZE, riskFilter);
-  const alerts: any[] = Array.isArray(alertsQuery.data) ? alertsQuery.data : (alertsQuery.data as any)?.alerts || [];
+  const alerts: any[] = Array.isArray(alertsQuery.data)
+    ? alertsQuery.data
+    : (alertsQuery.data as any)?.alerts || [];
   const filteredAlerts = search
     ? alerts.filter(
         (a: any) =>
           a.alert_id.toLowerCase().includes(search.toLowerCase()) ||
-          a.entity_id.toLowerCase().includes(search.toLowerCase())
+          a.entity_id.toLowerCase().includes(search.toLowerCase()),
       )
     : alerts;
 
@@ -42,142 +51,260 @@ export default function Alerts() {
       timestamp: a.timestamp,
       reasons_count: a.reasons.length,
     }));
-    const csv = toCSV(data);
-    downloadFile(csv, `alerts_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadFile(toCSV(data), `alerts_export_${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   if (!activeDatasetId) {
     return (
-      <EmptyState
-        icon={<Filter className="w-16 h-16" />}
-        title="No Dataset Selected"
-        description="Select a processed dataset to view alerts."
-      />
+      <div className="glass-card animate-fade-in" style={{ minHeight: 400 }}>
+        <EmptyState
+          icon={<AlertTriangle style={{ width: 28, height: 28 }} />}
+          title="No Dataset Selected"
+          description="Select a processed dataset to view alerts."
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">Alert Triage</h1>
-          <p className="text-sm text-slate-500 mt-1">Review and prioritize threat alerts</p>
+          <h1 className="page-title">Alert Triage</h1>
+          <p className="page-subtitle">Review, filter, and investigate threat alerts</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExportCSV}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-color)] hover:border-[var(--border-hover)] bg-slate-900/50 text-sm text-slate-300 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
-        </div>
+        <button className="btn-secondary" onClick={handleExportCSV}>
+          <Download style={{ width: 14, height: 14 }} />
+          Export CSV
+        </button>
       </div>
 
       {/* Filter Bar */}
-      <div className="glass-card p-4">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <div className="glass-card" style={{ padding: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Search */}
+          <div style={{ position: 'relative', flex: 1, maxWidth: 440 }}>
+            <Search
+              style={{
+                position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                width: 15, height: 15, color: 'var(--text-muted)',
+              }}
+            />
             <input
               type="text"
-              placeholder="Search by Alert ID or Address..."
+              placeholder="Search by Alert ID or Entity Address..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] focus:border-blue-500/30 focus:outline-none text-sm text-slate-300 placeholder:text-slate-600 transition-colors"
+              className="input-field"
+              style={{ paddingLeft: 38, paddingRight: search ? 36 : 14 }}
             />
             {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-                <X className="w-4 h-4" />
+              <button
+                onClick={() => setSearch('')}
+                style={{
+                  position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                  background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
+                }}
+              >
+                <X style={{ width: 14, height: 14 }} />
               </button>
             )}
           </div>
 
+          {/* Filter toggle */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={cn(
-              'inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm transition-colors',
-              showFilters || riskFilter
-                ? 'border-blue-500/30 bg-blue-500/5 text-blue-400'
-                : 'border-[var(--border-color)] text-slate-400 hover:text-slate-300'
-            )}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 7,
+              padding: '9px 16px',
+              borderRadius: 10,
+              fontSize: 13,
+              fontWeight: 500,
+              cursor: 'pointer',
+              border: showFilters || riskFilter
+                ? '1px solid rgba(59, 124, 249, 0.3)'
+                : '1px solid var(--border-color)',
+              background: showFilters || riskFilter
+                ? 'rgba(59, 124, 249, 0.08)'
+                : 'rgba(99, 155, 255, 0.04)',
+              color: showFilters || riskFilter ? 'var(--accent-blue)' : 'var(--text-secondary)',
+              transition: 'all 0.2s ease',
+            }}
           >
-            <Filter className="w-4 h-4" />
+            <Filter style={{ width: 14, height: 14 }} />
             Filters
             {riskFilter && (
-              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-blue)' }} />
             )}
           </button>
+
+          {/* Count badge */}
+          {filteredAlerts.length > 0 && (
+            <span
+              style={{
+                padding: '4px 10px',
+                borderRadius: 999,
+                fontSize: 11.5,
+                fontWeight: 600,
+                background: 'rgba(99, 155, 255, 0.08)',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border-color)',
+                letterSpacing: '0.03em',
+              }}
+            >
+              {filteredAlerts.length} results
+            </span>
+          )}
         </div>
 
+        {/* Expanded filters */}
         {showFilters && (
-          <div className="mt-3 pt-3 border-t border-[var(--border-color)] flex items-center gap-2 animate-fade-in">
-            <span className="text-xs text-slate-500 mr-2">Risk Level:</span>
+          <div
+            className="animate-slide-in-down"
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: '1px solid var(--border-color)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
+            <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              Risk Level:
+            </span>
             <button
               onClick={() => { setRiskFilter(undefined); setPage(0); }}
-              className={cn(
-                'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                !riskFilter ? 'bg-blue-500/20 text-blue-400' : 'text-slate-500 hover:text-slate-300'
-              )}
+              style={{
+                padding: '5px 14px',
+                borderRadius: 8,
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                border: !riskFilter ? '1px solid rgba(59, 124, 249, 0.3)' : '1px solid var(--border-color)',
+                background: !riskFilter ? 'rgba(59, 124, 249, 0.12)' : 'transparent',
+                color: !riskFilter ? 'var(--accent-blue)' : 'var(--text-muted)',
+                transition: 'all 0.2s ease',
+              }}
             >
               All
             </button>
-            {RISK_LEVELS.map((level) => (
-              <button
-                key={level}
-                onClick={() => { setRiskFilter(level); setPage(0); }}
-                className={cn(
-                  'px-3 py-1.5 rounded-md text-xs font-medium transition-colors',
-                  riskFilter === level ? 'bg-blue-500/20 text-blue-400' : 'text-slate-500 hover:text-slate-300'
-                )}
-              >
-                {level}
-              </button>
-            ))}
+            {RISK_LEVELS.map((level) => {
+              const c = RISK_FILTER_COLORS[level];
+              const isActive = riskFilter === level;
+              return (
+                <button
+                  key={level}
+                  onClick={() => { setRiskFilter(level); setPage(0); }}
+                  style={{
+                    padding: '5px 14px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    border: isActive ? `1px solid ${c.border}` : '1px solid var(--border-color)',
+                    background: isActive ? c.bg : 'transparent',
+                    color: isActive ? c.active : 'var(--text-muted)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {level}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Table */}
       {alertsQuery.isLoading ? (
-        <div className="glass-card p-4"><TableSkeleton rows={10} cols={6} /></div>
+        <div className="glass-card" style={{ padding: 20 }}>
+          <TableSkeleton rows={10} cols={7} />
+        </div>
       ) : alertsQuery.isError ? (
         <ErrorState message="Failed to load alerts" onRetry={() => alertsQuery.refetch()} />
       ) : filteredAlerts.length === 0 ? (
-        <EmptyState
-          icon={<Filter className="w-12 h-12" />}
-          title="No Alerts Found"
-          description={search || riskFilter ? 'Try adjusting your filters.' : 'No alerts have been generated for this dataset.'}
-        />
+        <div className="glass-card">
+          <EmptyState
+            icon={<Filter style={{ width: 28, height: 28 }} />}
+            title="No Alerts Found"
+            description={
+              search || riskFilter
+                ? 'Try adjusting your search or filters.'
+                : 'No alerts have been generated for this dataset.'
+            }
+          />
+        </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
               <thead>
-                <tr className="border-b border-[var(--border-color)]">
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Alert ID</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Entity</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Score</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Level</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reasons</th>
+                <tr>
+                  <th>Alert ID</th>
+                  <th>Entity Address</th>
+                  <th>Type</th>
+                  <th style={{ textAlign: 'right' }}>Score</th>
+                  <th>Level</th>
+                  <th>Timestamp</th>
+                  <th style={{ textAlign: 'right' }}>Reasons</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAlerts.map((alert: any) => (
                   <tr
                     key={alert.alert_id}
+                    className="clickable"
                     onClick={() => navigate(`/investigations/${alert.entity_id}`)}
-                    className="border-b border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] cursor-pointer transition-colors"
                   >
-                    <td className="px-5 py-3 font-mono text-xs text-slate-400">{truncateAddress(alert.alert_id, 6)}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-slate-300">{truncateAddress(alert.entity_id)}</td>
-                    <td className="px-5 py-3 text-xs text-slate-400 capitalize">{alert.entity_type}</td>
-                    <td className="px-5 py-3 font-semibold text-white">{formatRiskScore(alert.risk_score)}</td>
-                    <td className="px-5 py-3"><RiskBadge level={alert.risk_level} /></td>
-                    <td className="px-5 py-3 text-xs text-slate-500">{formatTimestamp(alert.timestamp)}</td>
-                    <td className="px-5 py-3 text-xs text-slate-400">{alert.reasons.length}</td>
+                    <td>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--text-muted)' }}>
+                        {truncateAddress(alert.alert_id, 6)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: 'var(--text-secondary)' }}>
+                        {truncateAddress(alert.entity_id)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                        {alert.entity_type}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13.5 }}>
+                        {formatRiskScore(alert.risk_score)}
+                      </span>
+                    </td>
+                    <td><RiskBadge level={alert.risk_level} /></td>
+                    <td>
+                      <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                        {formatTimestamp(alert.timestamp)}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          minWidth: 22,
+                          height: 22,
+                          borderRadius: 999,
+                          fontSize: 11,
+                          fontWeight: 700,
+                          background: 'rgba(99, 155, 255, 0.1)',
+                          color: 'var(--accent-blue)',
+                        }}
+                      >
+                        {alert.reasons.length}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -185,24 +312,32 @@ export default function Alerts() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-color)]">
-            <span className="text-xs text-slate-500">
-              Page {page + 1} • Showing {filteredAlerts.length} results
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 20px',
+              borderTop: '1px solid var(--border-color)',
+            }}
+          >
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Page {page + 1} &middot; {filteredAlerts.length} records
             </span>
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <button
+                className="pagination-btn"
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
-                className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                Previous
+                ← Previous
               </button>
               <button
+                className="pagination-btn"
                 onClick={() => setPage(page + 1)}
                 disabled={alerts.length < PAGE_SIZE}
-                className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                Next
+                Next →
               </button>
             </div>
           </div>

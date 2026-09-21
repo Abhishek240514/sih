@@ -60,6 +60,14 @@ def parse_timestamp(ts: Any) -> Optional[datetime]:
         except (ValueError, OSError):
             return None
     if isinstance(ts, str):
+        ts = ts.strip()
+        # Try to parse as unix timestamp string first
+        if ts.replace(".", "", 1).isdigit():
+            try:
+                return datetime.fromtimestamp(float(ts))
+            except (ValueError, OSError):
+                pass
+        
         formats = [
             "%Y-%m-%dT%H:%M:%S.%fZ",
             "%Y-%m-%dT%H:%M:%SZ",
@@ -73,7 +81,7 @@ def parse_timestamp(ts: Any) -> Optional[datetime]:
         ]
         for fmt in formats:
             try:
-                return datetime.strptime(ts.strip(), fmt)
+                return datetime.strptime(ts, fmt)
             except ValueError:
                 continue
     return None

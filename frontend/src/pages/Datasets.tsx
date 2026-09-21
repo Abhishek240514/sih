@@ -4,12 +4,29 @@ import { useDataset } from '@/context/DatasetContext';
 import { TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { formatTimestamp, cn, datasetStatusConfig } from '@/lib/utils';
+import { formatTimestamp, datasetStatusConfig } from '@/lib/utils';
 import {
   Upload, Trash2, Play, X, Database, FileText,
-  AlertTriangle, CheckCircle2, Loader2, HardDrive,
+  AlertTriangle, CheckCircle2, Loader2, HardDrive, CloudUpload,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
+  uploaded: { label: 'Uploaded', color: '#3b7cf9', bg: 'rgba(59,124,249,0.1)', border: 'rgba(59,124,249,0.2)' },
+  processing: { label: 'Processing', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)' },
+  processed: { label: 'Processed', color: '#10d98a', bg: 'rgba(16,217,138,0.1)', border: 'rgba(16,217,138,0.2)' },
+  failed: { label: 'Failed', color: '#ff3d55', bg: 'rgba(255,61,85,0.1)', border: 'rgba(255,61,85,0.2)' },
+  READY: { label: 'Ready', color: '#10d98a', bg: 'rgba(16,217,138,0.1)', border: 'rgba(16,217,138,0.2)' },
+};
+
+function getStatusConf(status: string) {
+  return STATUS_CONFIG[status] || STATUS_CONFIG[status.toLowerCase()] || {
+    label: status,
+    color: 'var(--text-muted)',
+    bg: 'rgba(99,155,255,0.07)',
+    border: 'var(--border-color)',
+  };
+}
 
 export default function Datasets() {
   const datasetsQuery = useDatasets();
@@ -60,83 +77,121 @@ export default function Datasets() {
     }
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileUpload(file);
-  }, [uploadName]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileUpload(file);
+    },
+    [uploadName],
+  );
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">Datasets</h1>
-          <p className="text-sm text-slate-500 mt-1">Upload and manage forensic datasets</p>
+          <h1 className="page-title">Datasets</h1>
+          <p className="page-subtitle">Upload and manage Bitcoin forensic datasets</p>
         </div>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
-        >
-          <Upload className="w-4 h-4" />
+        <button className="btn-primary" onClick={() => setShowUpload(true)}>
+          <Upload style={{ width: 14, height: 14 }} />
           Upload Dataset
         </button>
       </div>
 
       {/* Upload Modal */}
       {showUpload && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setShowUpload(false)}>
-          <div className="glass-card w-full max-w-lg p-6 m-4 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-white">Upload Dataset</h2>
-              <button onClick={() => setShowUpload(false)} className="text-slate-500 hover:text-white transition-colors">
-                <X className="w-5 h-5" />
+        <div className="modal-backdrop" onClick={() => setShowUpload(false)}>
+          <div
+            className="glass-card animate-fade-in"
+            style={{ width: '100%', maxWidth: 480, padding: 28 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
+                  Upload Dataset
+                </h2>
+                <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+                  Import forensic data for analysis
+                </p>
+              </div>
+              <button className="btn-icon" onClick={() => setShowUpload(false)}>
+                <X style={{ width: 15, height: 15 }} />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5">Dataset Name</label>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Dataset Name
+                </label>
                 <input
                   type="text"
                   placeholder="e.g., BTC Transactions Q4 2024"
                   value={uploadName}
                   onChange={(e) => setUploadName(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] focus:border-blue-500/30 focus:outline-none text-sm text-slate-300 placeholder:text-slate-600"
+                  className="input-field"
                 />
               </div>
 
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-                className={cn(
-                  'border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer',
-                  dragOver ? 'border-blue-500 bg-blue-500/5' : 'border-[var(--border-color)] hover:border-[var(--border-hover)]'
-                )}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-                <p className="text-sm text-slate-300 mb-1">
-                  {uploadMutation.isPending ? 'Uploading...' : 'Drop your file here or click to browse'}
-                </p>
-                <p className="text-xs text-slate-500">Supports CSV, JSON, XML</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".csv,.json,.xml"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleFileUpload(file);
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  File
+                </label>
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    border: `2px dashed ${dragOver ? 'rgba(59, 124, 249, 0.5)' : 'rgba(99, 155, 255, 0.15)'}`,
+                    borderRadius: 12,
+                    padding: '32px 24px',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    background: dragOver ? 'rgba(59, 124, 249, 0.05)' : 'rgba(99, 155, 255, 0.02)',
+                    transition: 'all 0.2s ease',
                   }}
-                />
+                >
+                  <CloudUpload
+                    style={{ width: 36, height: 36, color: dragOver ? 'var(--accent-blue)' : 'var(--text-muted)', margin: '0 auto 12px' }}
+                  />
+                  <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 4, fontWeight: 500 }}>
+                    {uploadMutation.isPending ? 'Uploading...' : 'Drop file here or click to browse'}
+                  </p>
+                  <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                    Supports CSV, JSON, XML
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,.json,.xml"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileUpload(file);
+                    }}
+                  />
+                </div>
               </div>
 
               {uploadMutation.isPending && (
-                <div className="flex items-center gap-2 text-sm text-blue-400">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Uploading...
+                <div
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    background: 'rgba(59, 124, 249, 0.08)',
+                    border: '1px solid rgba(59, 124, 249, 0.15)',
+                  }}
+                >
+                  <Loader2 style={{ width: 15, height: 15, color: 'var(--accent-blue)', animation: 'spin 1s linear infinite' }} />
+                  <span style={{ fontSize: 13, color: 'var(--accent-blue)', fontWeight: 500 }}>
+                    Uploading dataset...
+                  </span>
                 </div>
               )}
             </div>
@@ -146,28 +201,38 @@ export default function Datasets() {
 
       {/* Delete Confirmation */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center" onClick={() => setDeleteConfirm(null)}>
-          <div className="glass-card w-full max-w-sm p-6 m-4 animate-fade-in" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
+        <div className="modal-backdrop" onClick={() => setDeleteConfirm(null)}>
+          <div
+            className="glass-card animate-fade-in"
+            style={{ width: '100%', maxWidth: 380, padding: 28 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(255,61,85,0.1)', border: '1px solid rgba(255,61,85,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle style={{ width: 22, height: 22, color: '#ff3d55' }} />
               </div>
-              <h3 className="text-lg font-bold text-white">Delete Dataset</h3>
+              <div>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Delete Dataset</h3>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>This cannot be undone</p>
+              </div>
             </div>
-            <p className="text-sm text-slate-400 mb-6">This action cannot be undone. All associated data will be permanently removed.</p>
-            <div className="flex gap-3 justify-end">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 rounded-lg border border-[var(--border-color)] text-sm text-slate-400 hover:text-white transition-colors"
-              >
+            <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', marginBottom: 22, lineHeight: 1.6 }}>
+              All associated wallets, transactions, alerts, and graph data will be permanently deleted.
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button className="btn-secondary" onClick={() => setDeleteConfirm(null)}>
                 Cancel
               </button>
               <button
+                className="btn-danger"
                 onClick={() => handleDelete(deleteConfirm)}
                 disabled={deleteMutation.isPending}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white text-sm font-medium transition-colors disabled:opacity-50"
               >
-                {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                {deleteMutation.isPending ? (
+                  <><Loader2 style={{ width: 14, height: 14, animation: 'spin 1s linear infinite' }} /> Deleting...</>
+                ) : (
+                  <><Trash2 style={{ width: 14, height: 14 }} /> Delete</>
+                )}
               </button>
             </div>
           </div>
@@ -176,97 +241,119 @@ export default function Datasets() {
 
       {/* Datasets Table */}
       {datasetsQuery.isLoading ? (
-        <div className="glass-card p-4"><TableSkeleton rows={5} cols={7} /></div>
+        <div className="glass-card" style={{ padding: 20 }}>
+          <TableSkeleton rows={5} cols={7} />
+        </div>
       ) : datasetsQuery.isError ? (
         <ErrorState message="Failed to load datasets" onRetry={() => datasetsQuery.refetch()} />
       ) : datasets.length === 0 ? (
-        <EmptyState
-          icon={<Database className="w-12 h-12" />}
-          title="No Datasets"
-          description="Upload your first forensic dataset to get started."
-          action={
-            <button
-              onClick={() => setShowUpload(true)}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
-            >
-              Upload Dataset
-            </button>
-          }
-        />
+        <div className="glass-card">
+          <EmptyState
+            icon={<Database style={{ width: 30, height: 30 }} />}
+            title="No Datasets"
+            description="Upload your first forensic dataset to begin analysis."
+            action={
+              <button className="btn-primary" onClick={() => setShowUpload(true)}>
+                <Upload style={{ width: 14, height: 14 }} />
+                Upload Dataset
+              </button>
+            }
+          />
+        </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
               <thead>
-                <tr className="border-b border-[var(--border-color)]">
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Format</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Total</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Valid</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Invalid</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Created</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                <tr>
+                  <th>Name</th>
+                  <th>Format</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Total Records</th>
+                  <th style={{ textAlign: 'right' }}>Valid</th>
+                  <th style={{ textAlign: 'right' }}>Invalid</th>
+                  <th>Created</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {datasets.map((ds) => {
-                  const statusConf = datasetStatusConfig[ds.status] || datasetStatusConfig.uploaded;
+                {datasets.map((ds: any) => {
+                  const statusStr = String(ds.status).toLowerCase();
+                  const conf = getStatusConf(statusStr) || getStatusConf(ds.status);
                   const isActive = ds.id === activeDatasetId;
+
                   return (
-                    <tr key={ds.id} className={cn(
-                      'border-b border-[var(--border-color)] transition-colors',
-                      isActive ? 'bg-blue-500/5' : 'hover:bg-[var(--bg-card-hover)]'
-                    )}>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-slate-500 shrink-0" />
-                          <span className="text-slate-300 font-medium">{ds.name}</span>
-                          {isActive && <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 uppercase font-semibold">Active</span>}
+                    <tr key={ds.id} style={isActive ? { background: 'rgba(59, 124, 249, 0.04)' } : {}}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(99,155,255,0.08)', border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <FileText style={{ width: 14, height: 14, color: 'var(--text-muted)' }} />
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13.5 }}>{ds.name}</p>
+                            {isActive && (
+                              <span style={{ fontSize: 9.5, padding: '1px 7px', borderRadius: 999, background: 'rgba(59,124,249,0.15)', color: 'var(--accent-blue)', fontWeight: 700, letterSpacing: '0.08em' }}>
+                                ACTIVE
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3">
-                        <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-800/50 text-slate-400 uppercase">{ds.format}</span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border', (statusConf as any)?.class || (statusConf as any)?.color)}>
-                          {String(ds.status).toLowerCase() === 'processing' && <Loader2 className="w-3 h-3 animate-spin" />}
-                          {String(ds.status).toLowerCase() === 'processed' && <CheckCircle2 className="w-3 h-3" />}
-                          {String(ds.status).toLowerCase() === 'failed' && <AlertTriangle className="w-3 h-3" />}
-                          {statusConf?.label || ds.status}
+                      <td>
+                        <span style={{ padding: '3px 8px', borderRadius: 6, fontSize: 11, fontWeight: 700, background: 'rgba(99,155,255,0.08)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          {ds.format}
                         </span>
                       </td>
-                      <td className="px-5 py-3 text-right text-slate-300">{((ds as any).total_records ?? ds.records_count ?? 0).toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right text-emerald-400">{((ds as any).valid_records ?? ds.valid_tx_count ?? 0).toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right text-red-400">{((ds as any).invalid_records ?? ds.anomaly_count ?? 0).toLocaleString()}</td>
-                      <td className="px-5 py-3 text-xs text-slate-500">{formatTimestamp((ds as any).created_at ?? ds.uploaded_at)}</td>
-                      <td className="px-5 py-3">
-                        <div className="flex items-center justify-end gap-1">
-                          {String(ds.status).toLowerCase() === 'uploaded' && (
+                      <td>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: conf.bg, color: conf.color, border: `1px solid ${conf.border}` }}>
+                          {statusStr === 'processing' && <Loader2 style={{ width: 11, height: 11, animation: 'spin 1s linear infinite' }} />}
+                          {statusStr === 'processed' || ds.status === 'READY' ? <CheckCircle2 style={{ width: 11, height: 11 }} /> : null}
+                          {statusStr === 'failed' && <AlertTriangle style={{ width: 11, height: 11 }} />}
+                          {conf.label}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontSize: 13 }}>
+                        {((ds as any).total_records ?? ds.records_count ?? 0).toLocaleString()}
+                      </td>
+                      <td style={{ textAlign: 'right', color: '#10d98a', fontSize: 13, fontWeight: 600 }}>
+                        {((ds as any).valid_records ?? ds.valid_tx_count ?? 0).toLocaleString()}
+                      </td>
+                      <td style={{ textAlign: 'right', color: '#ff3d55', fontSize: 13, fontWeight: 600 }}>
+                        {((ds as any).invalid_records ?? ds.anomaly_count ?? 0).toLocaleString()}
+                      </td>
+                      <td style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                        {formatTimestamp((ds as any).created_at ?? ds.uploaded_at)}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
+                          {statusStr === 'uploaded' && (
                             <button
                               onClick={() => handleProcess(ds.id)}
                               disabled={processMutation.isPending}
-                              className="p-1.5 rounded-md hover:bg-emerald-500/10 text-emerald-400 transition-colors"
-                              title="Process"
+                              className="btn-icon"
+                              title="Process Dataset"
+                              style={{ color: '#10d98a', borderColor: 'rgba(16,217,138,0.2)', background: 'rgba(16,217,138,0.06)' }}
                             >
-                              <Play className="w-4 h-4" />
+                              <Play style={{ width: 13, height: 13 }} />
                             </button>
                           )}
-                          {String(ds.status).toLowerCase() === 'processed' && !isActive && (
+                          {(statusStr === 'processed' || ds.status === 'READY') && !isActive && (
                             <button
                               onClick={() => setActiveDatasetId(ds.id)}
-                              className="p-1.5 rounded-md hover:bg-blue-500/10 text-blue-400 transition-colors"
-                              title="Set Active"
+                              className="btn-icon"
+                              title="Set as Active"
+                              style={{ color: 'var(--accent-blue)', borderColor: 'rgba(59,124,249,0.2)', background: 'rgba(59,124,249,0.07)' }}
                             >
-                              <HardDrive className="w-4 h-4" />
+                              <HardDrive style={{ width: 13, height: 13 }} />
                             </button>
                           )}
                           <button
                             onClick={() => setDeleteConfirm(ds.id)}
-                            className="p-1.5 rounded-md hover:bg-red-500/10 text-red-400 transition-colors"
+                            className="btn-icon"
                             title="Delete"
+                            style={{ color: '#ff3d55', borderColor: 'rgba(255,61,85,0.2)', background: 'rgba(255,61,85,0.06)' }}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 style={{ width: 13, height: 13 }} />
                           </button>
                         </div>
                       </td>

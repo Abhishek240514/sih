@@ -1,21 +1,8 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import { DatasetProvider } from './context/DatasetContext';
 
-// Coinwise-Styled Forensic Landing Components
-import { Hero } from './components/Hero';
-import { LiveMarketTicker } from './components/LiveMarketTicker';
-import { ServicesSection } from './components/ServicesSection';
-import { StakingCalculator } from './components/StakingCalculator';
-import { InteractiveGraphSection } from './components/InteractiveGraphSection';
-import { MarketsSection } from './components/MarketsSection';
-import { SecurityCertifications } from './components/SecurityCertifications';
-import { PricingSection } from './components/PricingSection';
-import { AppShowcase } from './components/AppShowcase';
-import { Footer } from './components/Footer';
-import { GetStartedModal } from './components/GetStartedModal';
-
-// Dedicated SOC Workstation Layout & Pages
+// SOC Workstation Layout & Pages
 import { Sidebar } from './components/layout/Sidebar';
 import Dashboard from './pages/Dashboard';
 import Alerts from './pages/Alerts';
@@ -25,83 +12,76 @@ import Datasets from './pages/Datasets';
 import MLModels from './pages/MLModels';
 import Entities from './pages/Entities';
 
-function ExecutivePortalView({
-  onOpenModal,
-  onOpenWorkstation,
-}: {
-  onOpenModal: () => void;
-  onOpenWorkstation: () => void;
-}) {
-  const handleScrollToSection = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+function SOCWorkstation() {
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-[#0F172A] font-sans selection:bg-[#D4AF37]/20 selection:text-[#0F172A]">
-      {/* 1. Coinwise Hero with Motion Video Loop & GSAP Entrance */}
-      <Hero
-        onOpenWorkstation={onOpenModal}
-        onExploreGraph={() => handleScrollToSection('graph-canvas')}
-        onIngestDataset={onOpenModal}
-      />
+    <div
+      className="min-h-screen flex"
+      style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}
+    >
+      {/* Scan line at top */}
+      <div className="scan-line" />
 
-      {/* 2. Live Bitcoin Forensic Telemetry Ticker */}
-      <LiveMarketTicker onSelectMetric={() => handleScrollToSection('triage')} />
-
-      {/* 3. Core Forensic Intelligence Pillars */}
-      <ServicesSection onLearnMore={() => handleScrollToSection('risk-engine')} />
-
-      {/* 4. Interactive Hybrid Risk & ML Anomaly Simulator */}
-      <StakingCalculator onStartInvestigation={onOpenModal} />
-
-      {/* 5. Embedded Cytoscape.js Transaction Network Canvas */}
-      <InteractiveGraphSection onOpenFullExplorer={onOpenWorkstation} />
-
-      {/* 6. Live Ranked Threat Surveillance Triage Table */}
-      <MarketsSection
-        onInspectGraph={() => handleScrollToSection('graph-canvas')}
-      />
-
-      {/* 7. Evidentiary Standards & Legal Compliance Badges */}
-      <SecurityCertifications />
-
-      {/* 8. Active Cybercrime Investigation Dockets */}
-      <PricingSection onSelectTier={onOpenModal} />
-
-      {/* 9. Judicial Affidavits & FinCEN SAR Export Suite */}
-      <AppShowcase />
-
-      {/* 10. Institutional Forensic Footer */}
-      <Footer />
-    </div>
-  );
-}
-
-function SOCWorkstationRoutes({ onReturnToPortal }: { onReturnToPortal: () => void }) {
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex antialiased">
+      {/* Sidebar */}
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 ml-64">
-        {/* Top bar with return button */}
-        <div className="bg-slate-900 border-b border-slate-800 px-6 py-2.5 flex items-center justify-between z-30">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-mono font-bold text-slate-200">
-              SOC WORKSTATION MODE • LOCAL ANALYSIS ACTIVE
+
+      {/* Main content area */}
+      <div
+        style={{
+          marginLeft: 240,
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          minHeight: '100vh',
+        }}
+      >
+        {/* Top status bar */}
+        <header className="soc-topbar" style={{ zIndex: 30 }}>
+          <div className="flex items-center gap-4">
+            {/* Live indicator */}
+            <div className="flex items-center gap-2">
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: '#10d98a',
+                  boxShadow: '0 0 8px rgba(16, 217, 138, 0.8)',
+                  display: 'inline-block',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+              <span style={{ color: '#10d98a', fontWeight: 700, fontSize: 10.5, letterSpacing: '0.08em' }}>
+                LIVE
+              </span>
+            </div>
+            <span style={{ color: 'var(--border-hover)', fontSize: 11, letterSpacing: '0.06em' }}>
+              BITCOIN FORENSIC INTELLIGENCE SYSTEM · OFFLINE MODE
             </span>
           </div>
-          <button
-            onClick={onReturnToPortal}
-            className="text-xs font-semibold px-4 py-1.5 rounded-full bg-amber-50 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-white transition-all cursor-pointer"
-          >
-            ← Return to Coinwise Forensics Portal
-          </button>
-        </div>
 
-        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+              <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{dateStr}</span>
+              <span
+                className="tabular-nums"
+                style={{ fontFamily: "'JetBrains Mono', monospace", color: 'var(--accent-cyan)', fontSize: 12 }}
+              >
+                {timeStr}
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main
+          className="flex-1 grid-bg"
+          style={{ padding: '28px 32px', overflowY: 'auto', overflowX: 'hidden' }}
+        >
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/alerts" element={<Alerts />} />
@@ -119,26 +99,9 @@ function SOCWorkstationRoutes({ onReturnToPortal }: { onReturnToPortal: () => vo
 }
 
 export default function App() {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [isWorkstationMode, setIsWorkstationMode] = useState(false);
-
   return (
     <DatasetProvider>
-      {isWorkstationMode ? (
-        <SOCWorkstationRoutes onReturnToPortal={() => setIsWorkstationMode(false)} />
-      ) : (
-        <ExecutivePortalView
-          onOpenModal={() => setModalOpen(true)}
-          onOpenWorkstation={() => setIsWorkstationMode(true)}
-        />
-      )}
-
-      {/* Quick Ingest & Lead Initiation Modal */}
-      <GetStartedModal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onLaunchWorkspace={() => setIsWorkstationMode(true)}
-      />
+      <SOCWorkstation />
     </DatasetProvider>
   );
 }
