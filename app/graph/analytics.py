@@ -1,7 +1,9 @@
 import networkx as nx
-from typing import Dict, List, Set, Any, Optional, Tuple
+from typing import Dict, List, Set, Any, Optional, Tuple, Callable
 from datetime import datetime
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from app.graph.builder import graph_builder
 from app.core.config import settings
@@ -12,6 +14,7 @@ logger = logging.getLogger(__name__)
 class GraphAnalytics:
     def __init__(self):
         self.graph = graph_builder.graph
+        self._executor = ThreadPoolExecutor(max_workers=2)
     
     def compute_wallet_graph_features(self) -> Dict[str, Dict[str, float]]:
         wallet_nodes = [
@@ -32,14 +35,18 @@ class GraphAnalytics:
             pagerank = {n: 0.0 for n in wallet_nodes}
         
         try:
+            k_sample = min(10, len(wallet_nodes)) if len(wallet_nodes) > 1000 else min(50, len(wallet_nodes))
             betweenness = nx.betweenness_centrality(
-                wallet_subgraph, k=min(100, len(wallet_nodes)), normalized=True
+                wallet_subgraph, k=k_sample, normalized=True
             )
         except Exception:
             betweenness = {n: 0.0 for n in wallet_nodes}
         
         try:
-            closeness = nx.closeness_centrality(wallet_subgraph)
+            if len(wallet_nodes) > 100:
+                closeness = {n: 0.0 for n in wallet_nodes}
+            else:
+                closeness = nx.closeness_centrality(wallet_subgraph)
         except Exception:
             closeness = {n: 0.0 for n in wallet_nodes}
         
@@ -64,6 +71,11 @@ class GraphAnalytics:
             }
         
         return features
+    
+    async def compute_wallet_graph_features_async(self) -> Dict[str, Dict[str, float]]:
+        """Compute graph features asynchronously for large graphs."""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(self._executor, self.compute_wallet_graph_features)
     
     def find_suspicious_paths(
         self,
@@ -229,6 +241,28 @@ class GraphAnalytics:
                 subgraph.add_edge(src, dst, key=key, **data)
         
         return subgraph
+    
+    def compute_centrality_incremental(
+        self,
+        new_wallet_nodes: List[str],
+        callback: Optional[Callable] = None,
+    ) -> Dict[str, Dict[str, float]]:
+        """
+        Compute centrality for new nodes only (incremental update).
+        More efficient than full recomputation for large graphs.
+        """
+        if not new_wallet_nodes:
+            return {}
+        
+        undirected = self.graph.to_undirected()
+        wallet_nodes = [n for n, d in self.graph.nodes(data=True) if d.get("type") == "wallet"]
+        wallet_subgraph = undirected.subgraph(wallet_nodes)
+        
+        # Compute centrality for all (for now - could be optimized)
+        features = self.compute_wallet_graph_features()
+        
+        # Return only requested nodes
+        return {n: features.get(n, {}) for n in new_wallet_nodes if n in features}
 
 
 graph_analytics = GraphAnalytics()

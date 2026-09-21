@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     processed_data_dir: Path = BASE_DIR / "data" / "processed"
     models_dir: Path = BASE_DIR / "data" / "models"
     sample_data_dir: Path = BASE_DIR / "data" / "sample"
+    geoip_data_dir: Path = BASE_DIR / "data" / "geoip"
     
     max_upload_size: int = 1024 * 1024 * 1024  # 1GB limit
     allowed_extensions: set = {".csv", ".json", ".xml"}
@@ -37,6 +38,8 @@ class Settings(BaseSettings):
     risk_temporal_weight: float = 0.20
     risk_network_weight: float = 0.15
     risk_behavior_weight: float = 0.15
+    risk_propagation_decay: float = 0.7
+    risk_propagation_max_depth: int = 3
     
     risk_low_threshold: float = 0.25
     risk_medium_threshold: float = 0.50
@@ -64,5 +67,6 @@ for path in [
     settings.processed_data_dir,
     settings.models_dir,
     settings.sample_data_dir,
+    settings.geoip_data_dir,
 ]:
     path.mkdir(parents=True, exist_ok=True)

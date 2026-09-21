@@ -1,6 +1,6 @@
 import json
 import ijson
-from typing import List, Dict, Any, Iterator, Optional, Union
+from typing import List, Dict, Any, Iterator, Optional, Union, AsyncIterator
 from pathlib import Path
 import logging
 
@@ -130,6 +130,50 @@ async def parse_json_bytes(content: bytes) -> List[NormalizedTransaction]:
     except Exception as e:
         logger.error(f"Failed to parse JSON bytes: {e}")
         raise
+
+
+async def parse_json_streaming(
+    content: bytes,
+    chunk_size: int = 10000,
+    max_chunks: Optional[int] = None,
+) -> AsyncIterator[List[NormalizedTransaction]]:
+    """
+    Stream parse large JSON arrays in chunks.
+    Assumes JSON is an array of objects at the root level.
+    """
+    if isinstance(content, bytes):
+        content = content.decode("utf-8")
+    
+    # Use ijson for streaming parsing
+    import io
+    parser = ijson.items(io.StringIO(content), "item")
+    
+    chunk = []
+    chunks_processed = 0
+    
+    for item in parser:
+        chunk.append(item)
+        if len(chunk) >= chunk_size:
+            transactions = parse_json_data(chunk)
+            if transactions:
+                yield transactions
+            
+            chunk = []
+            chunks_processed += 1
+            
+            if max_chunks and chunks_processed >= max_chunks:
+                logger.warning(f"Reached max_chunks limit ({max_chunks}), stopping")
+                break
+            
+            # Allow other tasks to run
+            import asyncio
+            await asyncio.sleep(0)
+    
+    # Process remaining items
+    if chunk:
+        transactions = parse_json_data(chunk)
+        if transactions:
+            yield transactions
 
 
 def validate_json_structure(data: List[Dict[str, Any]]) -> List[str]:

@@ -5,7 +5,7 @@ import logging
 from app.models.schemas import InvestigationResponse, NormalizedTransaction, Wallet, WalletFeatures
 from app.api.routes.graph import _ensure_graph_loaded
 from app.services.explanation_service import explanation_service
-from app.db.repository import WalletRepository, TransactionRepository, NetworkObservationRepository, DatasetRepository
+from app.db.repository import WalletRepository, TransactionRepository, NetworkObservationRepository, DatasetRepository, AlertRepository
 from app.db.database import get_db_session
 from app.core.exceptions import EntityNotFoundError, DatasetNotFoundError
 
@@ -41,12 +41,17 @@ async def get_investigation(
         wallet_obj.address = wallet_model.address
         wallet_obj.features = wallet_model.features or {}
         
+        # Ensure transaction timestamps are timezone-aware
+        from datetime import timezone
         tx_objects = []
         for tx in transactions:
             if entity_id in (tx.input_addresses or []) or entity_id in (tx.output_addresses or []):
+                ts = tx.timestamp
+                if ts.tzinfo is None:
+                    ts = ts.replace(tzinfo=timezone.utc)
                 tx_obj = NormalizedTransaction(
                     txid=tx.txid,
-                    timestamp=tx.timestamp,
+                    timestamp=ts,
                     inputs=tx.input_addresses or [],
                     outputs=tx.output_addresses or [],
                     input_amounts=tx.input_amounts or [],
@@ -86,6 +91,21 @@ async def get_investigation(
             transactions=tx_objects,
             network_observations=netobs_dicts,
         )
+        
+        # Override generated heuristics with ground truth from the DB
+        investigation["risk_score"] = wallet_model.risk_score
+        investigation["risk_level"] = wallet_model.risk_level
+        
+        import json
+        alert_repo = AlertRepository(db)
+        alert_model = alert_repo.get_by_entity(dataset_id, entity_id, "wallet")
+        if alert_model and alert_model.reasons:
+            if isinstance(alert_model.reasons, str):
+                investigation["reasons"] = json.loads(alert_model.reasons)
+            else:
+                investigation["reasons"] = alert_model.reasons
+        else:
+            investigation["reasons"] = []
         
         wallet_objs = []
         wallet_addresses = set(investigation.get("related_wallets", []))

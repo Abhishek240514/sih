@@ -1,11 +1,13 @@
 import { cn } from '@/lib/utils';
+import type { CSSProperties } from 'react';
 
 interface SkeletonProps {
   className?: string;
+  style?: CSSProperties;
 }
 
-export function Skeleton({ className }: SkeletonProps) {
-  return <div className={cn('animate-shimmer rounded-lg', className)} style={{ minHeight: 12 }} />;
+export function Skeleton({ className, style }: SkeletonProps) {
+  return <div className={cn('animate-shimmer rounded-lg', className)} style={{ minHeight: 12, ...style }} />;
 }
 
 export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {

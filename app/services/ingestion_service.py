@@ -1,11 +1,15 @@
 import hashlib
 import uuid
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, AsyncIterator
 from pathlib import Path
 import logging
 
-from app.ingestion.csv_parser import parse_csv_bytes, validate_csv_columns
-from app.ingestion.json_parser import parse_json_bytes, validate_json_structure
+from app.ingestion.csv_parser import (
+    parse_csv_bytes, parse_csv_streaming, validate_csv_columns
+)
+from app.ingestion.json_parser import (
+    parse_json_bytes, parse_json_streaming, validate_json_structure
+)
 from app.ingestion.xml_parser import parse_xml_bytes, validate_xml_structure
 from app.models.schemas import (
     NormalizedTransaction,
@@ -21,6 +25,8 @@ class IngestionService:
     def __init__(self):
         self.max_file_size = settings.max_upload_size
         self.allowed_extensions = settings.allowed_extensions
+        # Use streaming for files larger than this
+        self.streaming_threshold = 50 * 1024 * 1024  # 50 MB
     
     def detect_format(self, filename: str) -> DatasetFormat:
         ext = Path(filename).suffix.lower()
@@ -40,11 +46,20 @@ class IngestionService:
     def compute_content_hash(self, content: bytes) -> str:
         return hashlib.sha256(content).hexdigest()[:16]
     
+    def _should_use_streaming(self, content: bytes) -> bool:
+        return len(content) > self.streaming_threshold
+    
     async def parse_content(
         self, content: bytes, format: DatasetFormat
     ) -> List[NormalizedTransaction]:
+        """Parse content - uses streaming for large files."""
         self.validate_file_size(content)
         
+        if self._should_use_streaming(content):
+            logger.info(f"Large file detected ({len(content)} bytes), using streaming parser")
+            return await self._parse_streaming(content, format)
+        
+        # Standard parsing for smaller files
         if format == DatasetFormat.CSV:
             return await parse_csv_bytes(content)
         elif format == DatasetFormat.JSON:
@@ -53,6 +68,28 @@ class IngestionService:
             return await parse_xml_bytes(content)
         else:
             raise ValueError(f"Unsupported format: {format}")
+    
+    async def _parse_streaming(
+        self, content: bytes, format: DatasetFormat
+    ) -> List[NormalizedTransaction]:
+        """Parse using streaming for large files."""
+        all_transactions = []
+        
+        if format == DatasetFormat.CSV:
+            async for chunk in parse_csv_streaming(content):
+                all_transactions.extend(chunk)
+        elif format == DatasetFormat.JSON:
+            async for chunk in parse_json_streaming(content):
+                all_transactions.extend(chunk)
+        else:
+            # XML doesn't have streaming yet, fall back
+            logger.warning(f"Streaming not implemented for {format}, using standard parser")
+            if format == DatasetFormat.XML:
+                return await parse_xml_bytes(content)
+            raise ValueError(f"Unsupported format for streaming: {format}")
+        
+        logger.info(f"Streaming parse complete: {len(all_transactions)} transactions")
+        return all_transactions
     
     def deduplicate_transactions(
         self, transactions: List[NormalizedTransaction]
@@ -93,7 +130,7 @@ class IngestionService:
         self, content: bytes, filename: str, dataset_id: str
     ) -> tuple[List[NormalizedTransaction], IngestionReport]:
         format = self.detect_format(filename)
-        logger.info(f"Ingesting dataset {dataset_id} with format {format}")
+        logger.info(f"Ingesting dataset {dataset_id} with format {format} ({len(content)} bytes)")
         
         warnings = []
         
@@ -101,7 +138,12 @@ class IngestionService:
             if format == DatasetFormat.CSV:
                 import pandas as pd
                 import io
-                df = pd.read_csv(io.BytesIO(content), nrows=1)
+                # Quick validation on sample
+                if len(content) > 100000:
+                    # For large files, just validate first chunk
+                    df = pd.read_csv(io.BytesIO(content[:100000]), nrows=1)
+                else:
+                    df = pd.read_csv(io.BytesIO(content), nrows=1)
                 warnings.extend(validate_csv_columns(df))
             elif format == DatasetFormat.JSON:
                 data = parse_json_bytes.__wrapped__(content) if hasattr(parse_json_bytes, '__wrapped__') else []

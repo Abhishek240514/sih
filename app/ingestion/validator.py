@@ -4,6 +4,13 @@ from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from urllib.parse import urlparse
 
+# Import real GeoIP service
+from app.services.geoip_service import (
+    resolve_offline_geoip as real_resolve_offline_geoip,
+    is_valid_ip as real_is_valid_ip,
+    classify_ip_type,
+)
+
 
 IPV4_PATTERN = re.compile(
     r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
@@ -14,13 +21,18 @@ IPV6_PATTERN = re.compile(
 
 
 def is_valid_ip(ip: str) -> bool:
-    if not ip:
-        return False
-    try:
-        ipaddress.ip_address(ip)
-        return True
-    except ValueError:
-        return False
+    """Check if string is a valid IP address."""
+    return real_is_valid_ip(ip)
+
+
+def resolve_offline_geoip(ip: str) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Resolve GeoIP using local MaxMind database.
+    
+    Replaces the fake arithmetic first-octet mapping with real database lookups.
+    Returns (country_code, asn) or (None, None) for private/invalid/missing IPs.
+    """
+    return real_resolve_offline_geoip(ip)
 
 
 def is_valid_ipv4(ip: str) -> bool:

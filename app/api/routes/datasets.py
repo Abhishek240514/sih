@@ -9,9 +9,7 @@ from app.models.schemas import (
     DatasetStatus, DatasetFormat
 )
 from app.services.ingestion_service import ingestion_service
-from app.services.feature_service import FeatureEngineeringService
-from app.services.risk_service import RiskScoringService
-from app.ml.anomaly_detector import anomaly_detector
+from app.services.detection_pipeline import detection_pipeline
 from app.db.repository import (
     DatasetRepository, TransactionRepository, WalletRepository,
     AlertRepository, NetworkObservationRepository
@@ -72,52 +70,51 @@ async def upload_dataset(
     )
 
 
-def _compute_risk(addr: str, features) -> float:
-    score = 0.0
-    for prefix in ["1Peel", "3Mix", "1Ext"]:
-        if addr.startswith(prefix):
-            score += 60.0
-            break
-    if features.transaction_count > 10:
-        score += min(15.0, features.transaction_count * 0.5)
-    if features.fan_out > 20:
-        score += min(10.0, features.fan_out * 0.3)
-    if features.fan_in > 15:
-        score += min(10.0, features.fan_in * 0.3)
-    total_vol = features.total_input_amount + features.total_output_amount
-    if total_vol > 5.0:
-        score += min(10.0, total_vol * 0.5)
-    if features.unique_ips > 3:
-        score += 5.0
-    return min(100.0, max(0.0, score))
-
-def _risk_level(score: float) -> str:
-    if score >= 75: return "CRITICAL"
-    elif score >= 50: return "HIGH"
-    elif score >= 25: return "MEDIUM"
-    return "LOW"
-
 async def process_dataset_background(dataset_id: str, content: bytes, filename: str):
+    """Background task that uses the SHARED detection pipeline."""
     with get_db_session() as db:
         repo = DatasetRepository(db)
         repo.update_status(dataset_id, DatasetStatus.PROCESSING.value)
     
     try:
+        # Step 1: Ingest and parse
         transactions, report = await ingestion_service.ingest(content, filename, dataset_id)
         
-        feature_service = FeatureEngineeringService()
-        wallet_features = feature_service.compute_wallet_features(transactions)
+        # Step 2: Extract network observations from transactions
+        network_observations = []
+        for tx in transactions:
+            if tx.source_ips or tx.destination_ips:
+                for src_ip in (tx.source_ips or ["0.0.0.0"]):
+                    for dst_ip in (tx.destination_ips or ["0.0.0.0"]):
+                        network_observations.append({
+                            "txid": tx.txid,
+                            "timestamp": tx.timestamp.isoformat() if tx.timestamp else "",
+                            "src_ip": src_ip,
+                            "dst_ip": dst_ip,
+                            "src_port": tx.source_ports[0] if tx.source_ports else None,
+                            "dst_port": tx.destination_ports[0] if tx.destination_ports else None,
+                            "geo_country": tx.geo_country or "",
+                            "asn": tx.asn or "",
+                        })
         
+        # Step 3: Run SHARED detection pipeline
+        logger.info(f"Running shared detection pipeline for dataset {dataset_id}")
+        result = detection_pipeline.run(
+            transactions=transactions,
+            network_observations=network_observations,
+            dataset_id=dataset_id,
+            auto_train_ml=True,
+        )
+        
+        # Step 4: Persist results to database
         with get_db_session() as db:
             tx_repo = TransactionRepository(db)
             wallet_repo = WalletRepository(db)
             netobs_repo = NetworkObservationRepository(db)
             alert_repo = AlertRepository(db)
             
-            # 1. Transactions & Network Observations
+            # Insert transactions
             tx_records = []
-            netobs_records = []
-            
             for tx in transactions:
                 tx_records.append({
                     "id": str(uuid.uuid4()),
@@ -139,94 +136,82 @@ async def process_dataset_background(dataset_id: str, content: bytes, filename: 
                     "input_amount": tx.input_amount,
                     "output_amount": tx.output_amount,
                 })
-                
-                if tx.source_ips or tx.destination_ips:
-                    srcs = tx.source_ips if tx.source_ips else ["0.0.0.0"]
-                    dsts = tx.destination_ips if tx.destination_ips else ["0.0.0.0"]
-                    for src_ip in srcs:
-                        for dst_ip in dsts:
-                            netobs_records.append({
-                                "id": str(uuid.uuid4()),
-                                "dataset_id": dataset_id,
-                                "timestamp": tx.timestamp,
-                                "src_ip": src_ip,
-                                "dst_ip": dst_ip,
-                                "src_port": tx.source_ports[0] if tx.source_ports else None,
-                                "dst_port": tx.destination_ports[0] if tx.destination_ports else None,
-                                "txid": tx.txid,
-                                "geo_country": tx.geo_country or "",
-                                "asn": tx.asn or "",
-                            })
-            
             if tx_records: tx_repo.bulk_insert(tx_records)
-            if netobs_records: netobs_repo.bulk_insert(netobs_records)
-                
-            # 2. Wallets & Alerts
-            wallet_records = []
-            alert_records = []
             
-            for addr, features in wallet_features.items():
-                risk_score = _compute_risk(addr, features)
-                total_vol = features.total_input_amount + features.total_output_amount
-                
+            # Insert network observations
+            netobs_records = []
+            for obs in network_observations:
+                ts = datetime.fromisoformat(obs["timestamp"].replace("Z", "+00:00")) if obs.get("timestamp") else datetime.utcnow()
+                src_port = obs.get("src_port")
+                dst_port = obs.get("dst_port")
+                try:
+                    src_port = int(src_port) if src_port else None
+                except (ValueError, TypeError):
+                    src_port = None
+                try:
+                    dst_port = int(dst_port) if dst_port else None
+                except (ValueError, TypeError):
+                    dst_port = None
+                netobs_records.append({
+                    "id": str(uuid.uuid4()),
+                    "dataset_id": dataset_id,
+                    "timestamp": ts,
+                    "src_ip": obs.get("src_ip", "0.0.0.0"),
+                    "dst_ip": obs.get("dst_ip", "0.0.0.0"),
+                    "src_port": src_port,
+                    "dst_port": dst_port,
+                    "txid": obs.get("txid", ""),
+                    "geo_country": obs.get("geo_country", ""),
+                    "asn": obs.get("asn", ""),
+                })
+            if netobs_records: netobs_repo.bulk_insert(netobs_records)
+            
+            # Insert wallets from detection pipeline
+            wallet_records = []
+            for addr, wallet in result.wallets.items():
                 wallet_records.append({
                     "id": str(uuid.uuid4()),
                     "dataset_id": dataset_id,
-                    "address": addr,
-                    "transaction_count": features.transaction_count,
-                    "total_in": features.total_input_amount,
-                    "total_out": features.total_output_amount,
-                    "average_transaction_value": total_vol / max(features.transaction_count, 1),
-                    "unique_counterparties": features.unique_counterparties,
-                    "fan_in": features.fan_in,
-                    "fan_out": features.fan_out,
-                    "first_seen": None,
-                    "last_seen": None,
-                    "risk_score": round(risk_score, 2),
-                    "risk_level": _risk_level(risk_score),
-                    "community_id": None,
-                    "features": {
-                        "ip_count": features.unique_ips,
-                        "country_count": features.unique_countries,
-                        "cluster_size": 1,
-                    },
+                    "address": wallet.address,
+                    "transaction_count": wallet.transaction_count,
+                    "total_in": wallet.total_in,
+                    "total_out": wallet.total_out,
+                    "average_transaction_value": wallet.average_transaction_value,
+                    "unique_counterparties": wallet.unique_counterparties,
+                    "fan_in": wallet.fan_in,
+                    "fan_out": wallet.fan_out,
+                    "first_seen": wallet.first_seen,
+                    "last_seen": wallet.last_seen,
+                    "risk_score": wallet.risk_score,
+                    "risk_level": wallet.risk_level.value,
+                    "community_id": wallet.community_id,
+                    "features": wallet.features.model_dump() if hasattr(wallet.features, 'model_dump') else wallet.features,
                 })
-                
-                if risk_score >= 25.0:
-                    reasons = []
-                    if addr.startswith("1Peel"):
-                        reasons.append({"signal": "Peeling Chain Pattern", "description": "Sequential peel-off of small amounts", "contribution": 45, "evidence_type": "heuristic"})
-                    if addr.startswith("3Mix"):
-                        reasons.append({"signal": "Mixer/Tumbler Activity", "description": "Fan-in/fan-out structure with uniform amounts", "contribution": 55, "evidence_type": "heuristic"})
-                    if features.fan_out > 10:
-                        reasons.append({"signal": "High Dispersion", "description": f"Fan-out of {features.fan_out}", "contribution": 20, "evidence_type": "model_derived"})
-                    if features.transaction_count > 5:
-                        reasons.append({"signal": "Elevated Velocity", "description": f"{features.transaction_count} transactions", "contribution": 15, "evidence_type": "model_derived"})
-                    if not reasons:
-                        reasons.append({"signal": "Behavioral Anomaly", "description": "Statistical outlier", "contribution": 30, "evidence_type": "model_derived"})
-                        
-                    alert_records.append({
-                        "id": str(uuid.uuid4()),
-                        "dataset_id": dataset_id,
-                        "entity_id": addr,
-                        "entity_type": "wallet",
-                        "risk_score": risk_score,
-                        "risk_level": _risk_level(risk_score),
-                        "reasons": reasons,
-                        "related_transactions": [],
-                        "related_wallets": [],
-                        "related_ips": [],
-                        "related_asns": [],
-                        "related_countries": [],
-                        "graph_statistics": {},
-                        "correlation_evidence": [],
-                        "created_at": datetime.utcnow(),
-                    })
-                    
             if wallet_records: wallet_repo.bulk_insert(wallet_records)
+            
+            # Insert alerts from detection pipeline
+            alert_records = []
+            for alert in result.alerts:
+                alert_records.append({
+                    "id": str(uuid.uuid4()),
+                    "dataset_id": dataset_id,
+                    "entity_id": alert.entity_id,
+                    "entity_type": alert.entity_type,
+                    "risk_score": alert.risk_score,
+                    "risk_level": alert.risk_level.value,
+                    "reasons": [r.model_dump() for r in alert.reasons],
+                    "related_transactions": alert.related_transactions,
+                    "related_wallets": alert.related_wallets,
+                    "related_ips": alert.related_ips,
+                    "related_asns": alert.related_asns,
+                    "related_countries": alert.related_countries,
+                    "graph_statistics": alert.graph_statistics,
+                    "correlation_evidence": [c.model_dump() for c in alert.correlation_evidence],
+                    "created_at": alert.timestamp,
+                })
             if alert_records: alert_repo.bulk_insert(alert_records)
-        
-            # 3. Update Dataset Status
+            
+            # Update Dataset Status
             dataset_repo = DatasetRepository(db)
             dataset_repo.update_status(
                 dataset_id,
@@ -238,7 +223,9 @@ async def process_dataset_background(dataset_id: str, content: bytes, filename: 
                 warnings=report.warnings,
             )
             
-        logger.info(f"Dataset {dataset_id} fully hydrated in DB")
+        logger.info(f"Dataset {dataset_id} fully processed via shared pipeline: "
+                    f"{len(result.wallets)} wallets, {len(result.alerts)} alerts, "
+                    f"ML trained: {result.ml_model_trained}")
     except Exception as e:
         logger.error(f"Dataset {dataset_id} processing failed: {e}")
         with get_db_session() as db:

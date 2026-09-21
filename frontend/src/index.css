@@ -424,6 +424,46 @@ select {
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ─── VideoBackground animations ─── */
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  33% { transform: translate(30px, -30px) scale(1.1); opacity: 0.5; }
+  66% { transform: translate(-20px, 20px) scale(0.9); opacity: 0.4; }
+}
+
+@keyframes float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+  33% { transform: translate(-25px, 25px) scale(1.15); opacity: 0.45; }
+  66% { transform: translate(15px, -15px) scale(0.85); opacity: 0.35; }
+}
+
+@keyframes float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+  50% { transform: translate(-10px, -10px) scale(1.2); opacity: 0.4; }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient 15s ease infinite;
+}
+
+.animate-float-1 {
+  animation: float-1 20s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float-2 25s ease-in-out infinite;
+}
+
+.animate-float-3 {
+  animation: float-3 18s ease-in-out infinite;
+}
+
 .animate-fade-in {
   animation: fade-in 0.3s ease forwards;
 }

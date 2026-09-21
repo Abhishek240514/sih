@@ -1,5 +1,3 @@
-import { fetchBaseQuery } from '@tanstack/react-query';
-
 const API_BASE = '/api';
 
 async function request<T>(url: string, options: RequestInit = {}): Promise<T> {

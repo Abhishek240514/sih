@@ -105,8 +105,19 @@ def cluster_wallets_by_behavior(
     wallet_ids = list(features.keys())
     feature_names = list(next(iter(features.values())).keys())
     
-    X = np.array([[features[w].get(fn, 0.0) for fn in feature_names] for w in wallet_ids])
+    # Only include numeric features
+    numeric_features = []
+    for fn in feature_names:
+        sample_val = features[wallet_ids[0]].get(fn, 0.0)
+        if isinstance(sample_val, (int, float)) and not isinstance(sample_val, bool):
+            numeric_features.append(fn)
+    
+    X = np.array([[features[w].get(fn, 0.0) for fn in numeric_features] for w in wallet_ids])
     X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    # Additional safety: replace any remaining invalid values
+    if np.any(np.isnan(X)) or np.any(np.isinf(X)):
+        X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
     
     clusterer = EntityClusterer(random_state=settings.ml_random_seed)
     

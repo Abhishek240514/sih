@@ -4,7 +4,7 @@ import { useDataset } from '@/context/DatasetContext';
 import { TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
-import { formatTimestamp, datasetStatusConfig } from '@/lib/utils';
+import { formatTimestamp } from '@/lib/utils';
 import {
   Upload, Trash2, Play, X, Database, FileText,
   AlertTriangle, CheckCircle2, Loader2, HardDrive, CloudUpload,

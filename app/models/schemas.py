@@ -118,6 +118,8 @@ class WalletFeatures(BaseModel):
     unique_countries: int = 0
     ip_change_rate: float = 0.0
     network_observation_count: int = 0
+    first_seen: Optional[datetime] = None
+    last_seen: Optional[datetime] = None
 
 
 class Wallet(BaseModel):
@@ -182,7 +184,7 @@ class AlertReason(BaseModel):
     signal: str
     description: str
     contribution: float
-    evidence_type: Literal["observed", "model_derived", "heuristic", "correlation"] = "observed"
+    evidence_type: Literal["observed", "model_derived", "heuristic", "correlation", "graph_propagation"] = "observed"
 
 
 class Alert(BaseModel):

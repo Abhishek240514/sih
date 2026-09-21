@@ -1,6 +1,7 @@
 import csv
 import io
-from typing import List, Dict, Any, Iterator, Optional
+import json
+from typing import List, Dict, Any, Iterator, Optional, AsyncIterator
 import pandas as pd
 import logging
 
@@ -10,6 +11,7 @@ from app.ingestion.validator import (
     normalize_addresses,
     normalize_amounts,
     validate_tx_id,
+    resolve_offline_geoip,
 )
 from app.models.schemas import NormalizedTransaction
 from app.core.config import settings
@@ -99,6 +101,11 @@ def parse_csv_row(row: Dict[str, Any]) -> Optional[NormalizedTransaction]:
     geo_country = row.get("geo_country")
     asn = row.get("asn")
     
+    if not geo_country and src_ips:
+        country, asn_val = resolve_offline_geoip(src_ips[0])
+        if country: geo_country = country
+        if asn_val and not asn: asn = asn_val
+        
     script_type = row.get("script_type")
     
     input_amount = sum(input_amounts)
@@ -138,6 +145,10 @@ def parse_csv_dataframe(df: pd.DataFrame) -> List[NormalizedTransaction]:
 
 
 async def parse_csv_bytes(content: bytes) -> List[NormalizedTransaction]:
+    """
+    Parse CSV from bytes - for smaller files.
+    For large files, use parse_csv_streaming instead.
+    """
     try:
         df = pd.read_csv(
             io.BytesIO(content),
@@ -182,6 +193,48 @@ async def parse_csv_bytes(content: bytes) -> List[NormalizedTransaction]:
     except Exception as e:
         logger.error(f"Failed to parse CSV bytes: {e}")
         raise
+
+
+async def parse_csv_streaming(
+    content: bytes,
+    chunk_size: int = 10000,
+    max_chunks: Optional[int] = None,
+) -> AsyncIterator[List[NormalizedTransaction]]:
+    """
+    Stream parse large CSV files in chunks to avoid memory issues.
+    
+    Yields lists of NormalizedTransaction for each chunk.
+    """
+    # First, detect delimiter from sample
+    sample = content[:8192].decode("utf-8", errors="replace")
+    delimiter = detect_delimiter(sample)
+    
+    # Use pandas chunked reading
+    reader = pd.read_csv(
+        io.BytesIO(content),
+        delimiter=delimiter,
+        chunksize=chunk_size,
+        dtype=str,
+        keep_default_na=False,
+        na_values=["", "NA", "N/A", "null", "NULL", "None"],
+        on_bad_lines="skip",
+    )
+    
+    chunks_processed = 0
+    for chunk in reader:
+        if max_chunks and chunks_processed >= max_chunks:
+            logger.warning(f"Reached max_chunks limit ({max_chunks}), stopping")
+            break
+            
+        transactions = parse_csv_dataframe(chunk)
+        if transactions:
+            yield transactions
+        
+        chunks_processed += 1
+        
+        # Allow other tasks to run
+        import asyncio
+        await asyncio.sleep(0)
 
 
 def validate_csv_columns(df: pd.DataFrame) -> List[str]:
