@@ -1,0 +1,770 @@
+[
+  {
+    "entity_id": "entity_normal_0000",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0001",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0002",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0003",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0004",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0005",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0006",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0007",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0008",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0009",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0010",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0011",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0012",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0013",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0014",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0015",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0016",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0017",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0018",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0019",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0020",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0021",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0022",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0023",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0024",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0025",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0026",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0027",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0028",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0029",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0030",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0031",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0032",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0033",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0034",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0035",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0036",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0037",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0038",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0039",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0040",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0041",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0042",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0043",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0044",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0045",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0046",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0047",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0048",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0049",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0050",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0051",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0052",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0053",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0054",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0055",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0056",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0057",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0058",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0059",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0060",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0061",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0062",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0063",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0064",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0065",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0066",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0067",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0068",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0069",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0070",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0071",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0072",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0073",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0074",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0075",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0076",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0077",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0078",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0079",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0080",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0081",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0082",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0083",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0084",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0085",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0086",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0087",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0088",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0089",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0090",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0091",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0092",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0093",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0094",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0095",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0096",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0097",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0098",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_normal_0099",
+    "pattern_type": "wallet",
+    "label": 0,
+    "details": {}
+  },
+  {
+    "entity_id": "entity_peeling_chain",
+    "pattern_type": "peeling_chain",
+    "label": 1,
+    "details": {
+      "chain_length": 8,
+      "initial_balance": 37.63960504,
+      "peel_amount": 0.17626918
+    }
+  },
+  {
+    "entity_id": "entity_mixer",
+    "pattern_type": "mixing_structure",
+    "label": 1,
+    "details": {
+      "fan_in": 12,
+      "fan_out": 12,
+      "denomination": 0.44378649
+    }
+  },
+  {
+    "entity_id": "entity_burst",
+    "pattern_type": "high_velocity_burst",
+    "label": 1,
+    "details": {
+      "burst_count": 20,
+      "avg_interval_seconds": 17.95
+    }
+  },
+  {
+    "entity_id": "entity_dormant_0",
+    "pattern_type": "dormant_to_active",
+    "label": 1,
+    "details": {
+      "dormant_days": 208,
+      "active_tx_count": 23
+    }
+  },
+  {
+    "entity_id": "entity_dormant_1",
+    "pattern_type": "dormant_to_active",
+    "label": 1,
+    "details": {
+      "dormant_days": 294,
+      "active_tx_count": 11
+    }
+  },
+  {
+    "entity_id": "entity_dormant_2",
+    "pattern_type": "dormant_to_active",
+    "label": 1,
+    "details": {
+      "dormant_days": 293,
+      "active_tx_count": 16
+    }
+  },
+  {
+    "entity_id": "entity_dormant_3",
+    "pattern_type": "dormant_to_active",
+    "label": 1,
+    "details": {
+      "dormant_days": 111,
+      "active_tx_count": 19
+    }
+  },
+  {
+    "entity_id": "entity_dormant_4",
+    "pattern_type": "dormant_to_active",
+    "label": 1,
+    "details": {
+      "dormant_days": 104,
+      "active_tx_count": 11
+    }
+  },
+  {
+    "entity_id": "entity_geo_anomaly_0",
+    "pattern_type": "geographic_anomaly",
+    "label": 1,
+    "details": {
+      "country_count": 8,
+      "time_span_hours": 96.0
+    }
+  },
+  {
+    "entity_id": "entity_geo_anomaly_1",
+    "pattern_type": "geographic_anomaly",
+    "label": 1,
+    "details": {
+      "country_count": 8,
+      "time_span_hours": 96.0
+    }
+  },
+  {
+    "entity_id": "entity_geo_anomaly_2",
+    "pattern_type": "geographic_anomaly",
+    "label": 1,
+    "details": {
+      "country_count": 8,
+      "time_span_hours": 96.0
+    }
+  },
+  {
+    "entity_id": "entity_shared_infra_0",
+    "pattern_type": "shared_infrastructure",
+    "label": 1,
+    "details": {
+      "wallet_count": 15,
+      "shared_ip": "161.107.143.94"
+    }
+  },
+  {
+    "entity_id": "entity_shared_infra_1",
+    "pattern_type": "shared_infrastructure",
+    "label": 1,
+    "details": {
+      "wallet_count": 8,
+      "shared_ip": "145.199.135.204"
+    }
+  },
+  {
+    "entity_id": "entity_shared_infra_2",
+    "pattern_type": "shared_infrastructure",
+    "label": 1,
+    "details": {
+      "wallet_count": 5,
+      "shared_ip": "109.215.199.30"
+    }
+  },
+  {
+    "entity_id": "entity_false_positive_0",
+    "pattern_type": "false_positive",
+    "label": 0,
+    "details": {
+      "reason": "normal_but_unusual"
+    }
+  },
+  {
+    "entity_id": "entity_false_positive_1",
+    "pattern_type": "false_positive",
+    "label": 0,
+    "details": {
+      "reason": "normal_but_unusual"
+    }
+  },
+  {
+    "entity_id": "entity_false_positive_2",
+    "pattern_type": "false_positive",
+    "label": 0,
+    "details": {
+      "reason": "normal_but_unusual"
+    }
+  },
+  {
+    "entity_id": "entity_false_positive_3",
+    "pattern_type": "false_positive",
+    "label": 0,
+    "details": {
+      "reason": "normal_but_unusual"
+    }
+  },
+  {
+    "entity_id": "entity_false_positive_4",
+    "pattern_type": "false_positive",
+    "label": 0,
+    "details": {
+      "reason": "normal_but_unusual"
+    }
+  }
+]

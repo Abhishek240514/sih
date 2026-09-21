@@ -454,10 +454,10 @@ export default function Investigation() {
                     <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
-                        style={{ width: `${Math.min(reason.contribution * 100, 100)}%` }}
+                        style={{ width: `${Math.min(Number(reason.contribution) || 0, 100)}%` }}
                       />
                     </div>
-                    <span className="text-xs text-slate-500 w-12 text-right">{(reason.contribution * 100).toFixed(0)}%</span>
+                    <span className="text-xs text-slate-500 w-12 text-right">{Number(reason.contribution || 0).toFixed(0)}%</span>
                   </div>
                 </div>
               ))}

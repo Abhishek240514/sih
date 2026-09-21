@@ -2,6 +2,8 @@ import networkx as nx
 from typing import List, Dict, Any, Set, Optional, Tuple
 from datetime import datetime
 import logging
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 from app.models.schemas import NormalizedTransaction, GraphNode, GraphEdge, GraphData
 from app.core.config import settings
@@ -15,14 +17,39 @@ class GraphBuilder:
         self.max_nodes = settings.graph_max_nodes
         self.max_edges = settings.graph_max_edges
         self.current_dataset_id = None
+        self._executor = ThreadPoolExecutor(max_workers=2)
     
     def build_graph(
         self,
         transactions: List[NormalizedTransaction],
         wallet_features: Dict[str, Any] = None,
     ) -> nx.MultiDiGraph:
+        """Build graph with bounded nodes/edges. Synchronous version."""
+        self._build_graph_internal(transactions, wallet_features or {})
+        return self.graph
+    
+    async def build_graph_async(
+        self,
+        transactions: List[NormalizedTransaction],
+        wallet_features: Dict[str, Any] = None,
+    ) -> nx.MultiDiGraph:
+        """Build graph asynchronously for large datasets."""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(
+            self._executor,
+            self._build_graph_internal,
+            transactions,
+            wallet_features or {}
+        )
+        return self.graph
+    
+    def _build_graph_internal(
+        self,
+        transactions: List[NormalizedTransaction],
+        wallet_features: Dict[str, Any],
+    ) -> None:
+        """Internal graph building with bounded resources."""
         self.graph.clear()
-        wallet_features = wallet_features or {}
         
         wallet_nodes = set()
         ip_nodes = set()
@@ -30,7 +57,9 @@ class GraphBuilder:
         country_nodes = set()
         tx_nodes = set()
         
-        for tx in transactions:
+        # Process transactions in batches for large datasets
+        batch_size = 1000
+        for i, tx in enumerate(transactions):
             if len(self.graph.nodes()) >= self.max_nodes:
                 logger.warning(f"Max nodes ({self.max_nodes}) reached, stopping graph construction")
                 break
@@ -50,21 +79,26 @@ class GraphBuilder:
                 )
                 tx_nodes.add(tx_id)
             
-            for addr in tx.inputs:
+            # Batch add wallet nodes
+            for addr in tx.inputs + tx.outputs:
                 wallet_id = f"wallet_{addr}"
                 if wallet_id not in wallet_nodes:
                     wf = wallet_features.get(addr, {})
                     risk_score = wf.get("risk_score", 0.0) if isinstance(wf, dict) else getattr(wf, "risk_score", 0.0)
+                    tx_count = wf.get("transaction_count", 0) if isinstance(wf, dict) else getattr(wf, "transaction_count", 0)
                     self.graph.add_node(
                         wallet_id,
                         type="wallet",
                         label=addr,
                         address=addr,
                         risk_score=risk_score,
-                        transaction_count=wf.get("transaction_count", 0) if isinstance(wf, dict) else getattr(wf, "transaction_count", 0),
+                        transaction_count=tx_count,
                     )
                     wallet_nodes.add(wallet_id)
-                
+            
+            # Add edges for inputs
+            for addr in tx.inputs:
+                wallet_id = f"wallet_{addr}"
                 if len(self.graph.edges()) < self.max_edges:
                     self.graph.add_edge(
                         wallet_id,
@@ -75,21 +109,9 @@ class GraphBuilder:
                         confidence=1.0,
                     )
             
+            # Add edges for outputs
             for addr in tx.outputs:
                 wallet_id = f"wallet_{addr}"
-                if wallet_id not in wallet_nodes:
-                    wf = wallet_features.get(addr, {})
-                    risk_score = wf.get("risk_score", 0.0) if isinstance(wf, dict) else getattr(wf, "risk_score", 0.0)
-                    self.graph.add_node(
-                        wallet_id,
-                        type="wallet",
-                        label=addr,
-                        address=addr,
-                        risk_score=risk_score,
-                        transaction_count=wf.get("transaction_count", 0) if isinstance(wf, dict) else getattr(wf, "transaction_count", 0),
-                    )
-                    wallet_nodes.add(wallet_id)
-                
                 if len(self.graph.edges()) < self.max_edges:
                     self.graph.add_edge(
                         tx_id,
@@ -100,7 +122,8 @@ class GraphBuilder:
                         confidence=1.0,
                     )
             
-            for ip in tx.source_ips:
+            # Add IP nodes and edges
+            for ip in tx.source_ips + tx.destination_ips:
                 ip_id = f"ip_{ip}"
                 if ip_id not in ip_nodes:
                     self.graph.add_node(
@@ -112,34 +135,16 @@ class GraphBuilder:
                     ip_nodes.add(ip_id)
                 
                 if len(self.graph.edges()) < self.max_edges:
+                    edge_type = "OBSERVED_SOURCE" if ip in tx.source_ips else "OBSERVED_DEST"
                     self.graph.add_edge(
-                        ip_id,
-                        tx_id,
-                        type="OBSERVED_SOURCE",
+                        ip_id if ip in tx.source_ips else tx_id,
+                        tx_id if ip in tx.source_ips else ip_id,
+                        type=edge_type,
                         timestamp=tx.timestamp.isoformat(),
                         confidence=0.7,
                     )
             
-            for ip in tx.destination_ips:
-                ip_id = f"ip_{ip}"
-                if ip_id not in ip_nodes:
-                    self.graph.add_node(
-                        ip_id,
-                        type="ip",
-                        label=ip,
-                        address=ip,
-                    )
-                    ip_nodes.add(ip_id)
-                
-                if len(self.graph.edges()) < self.max_edges:
-                    self.graph.add_edge(
-                        tx_id,
-                        ip_id,
-                        type="OBSERVED_DEST",
-                        timestamp=tx.timestamp.isoformat(),
-                        confidence=0.7,
-                    )
-            
+            # Add ASN nodes
             if tx.asn:
                 asn_id = f"asn_{tx.asn}"
                 if asn_id not in asn_nodes:
@@ -161,6 +166,7 @@ class GraphBuilder:
                             confidence=0.9,
                         )
             
+            # Add country nodes
             if tx.geo_country:
                 country_id = f"country_{tx.geo_country}"
                 if country_id not in country_nodes:
@@ -188,8 +194,6 @@ class GraphBuilder:
             f"Graph built: {self.graph.number_of_nodes()} nodes, "
             f"{self.graph.number_of_edges()} edges"
         )
-        
-        return self.graph
     
     def _add_wallet_to_wallet_edges(self, transactions: List[NormalizedTransaction]) -> None:
         for tx in transactions:

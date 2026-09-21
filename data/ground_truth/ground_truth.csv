@@ -1,0 +1,120 @@
+entity_id,pattern_type,label,details
+entity_normal_0000,wallet,0,{}
+entity_normal_0001,wallet,0,{}
+entity_normal_0002,wallet,0,{}
+entity_normal_0003,wallet,0,{}
+entity_normal_0004,wallet,0,{}
+entity_normal_0005,wallet,0,{}
+entity_normal_0006,wallet,0,{}
+entity_normal_0007,wallet,0,{}
+entity_normal_0008,wallet,0,{}
+entity_normal_0009,wallet,0,{}
+entity_normal_0010,wallet,0,{}
+entity_normal_0011,wallet,0,{}
+entity_normal_0012,wallet,0,{}
+entity_normal_0013,wallet,0,{}
+entity_normal_0014,wallet,0,{}
+entity_normal_0015,wallet,0,{}
+entity_normal_0016,wallet,0,{}
+entity_normal_0017,wallet,0,{}
+entity_normal_0018,wallet,0,{}
+entity_normal_0019,wallet,0,{}
+entity_normal_0020,wallet,0,{}
+entity_normal_0021,wallet,0,{}
+entity_normal_0022,wallet,0,{}
+entity_normal_0023,wallet,0,{}
+entity_normal_0024,wallet,0,{}
+entity_normal_0025,wallet,0,{}
+entity_normal_0026,wallet,0,{}
+entity_normal_0027,wallet,0,{}
+entity_normal_0028,wallet,0,{}
+entity_normal_0029,wallet,0,{}
+entity_normal_0030,wallet,0,{}
+entity_normal_0031,wallet,0,{}
+entity_normal_0032,wallet,0,{}
+entity_normal_0033,wallet,0,{}
+entity_normal_0034,wallet,0,{}
+entity_normal_0035,wallet,0,{}
+entity_normal_0036,wallet,0,{}
+entity_normal_0037,wallet,0,{}
+entity_normal_0038,wallet,0,{}
+entity_normal_0039,wallet,0,{}
+entity_normal_0040,wallet,0,{}
+entity_normal_0041,wallet,0,{}
+entity_normal_0042,wallet,0,{}
+entity_normal_0043,wallet,0,{}
+entity_normal_0044,wallet,0,{}
+entity_normal_0045,wallet,0,{}
+entity_normal_0046,wallet,0,{}
+entity_normal_0047,wallet,0,{}
+entity_normal_0048,wallet,0,{}
+entity_normal_0049,wallet,0,{}
+entity_normal_0050,wallet,0,{}
+entity_normal_0051,wallet,0,{}
+entity_normal_0052,wallet,0,{}
+entity_normal_0053,wallet,0,{}
+entity_normal_0054,wallet,0,{}
+entity_normal_0055,wallet,0,{}
+entity_normal_0056,wallet,0,{}
+entity_normal_0057,wallet,0,{}
+entity_normal_0058,wallet,0,{}
+entity_normal_0059,wallet,0,{}
+entity_normal_0060,wallet,0,{}
+entity_normal_0061,wallet,0,{}
+entity_normal_0062,wallet,0,{}
+entity_normal_0063,wallet,0,{}
+entity_normal_0064,wallet,0,{}
+entity_normal_0065,wallet,0,{}
+entity_normal_0066,wallet,0,{}
+entity_normal_0067,wallet,0,{}
+entity_normal_0068,wallet,0,{}
+entity_normal_0069,wallet,0,{}
+entity_normal_0070,wallet,0,{}
+entity_normal_0071,wallet,0,{}
+entity_normal_0072,wallet,0,{}
+entity_normal_0073,wallet,0,{}
+entity_normal_0074,wallet,0,{}
+entity_normal_0075,wallet,0,{}
+entity_normal_0076,wallet,0,{}
+entity_normal_0077,wallet,0,{}
+entity_normal_0078,wallet,0,{}
+entity_normal_0079,wallet,0,{}
+entity_normal_0080,wallet,0,{}
+entity_normal_0081,wallet,0,{}
+entity_normal_0082,wallet,0,{}
+entity_normal_0083,wallet,0,{}
+entity_normal_0084,wallet,0,{}
+entity_normal_0085,wallet,0,{}
+entity_normal_0086,wallet,0,{}
+entity_normal_0087,wallet,0,{}
+entity_normal_0088,wallet,0,{}
+entity_normal_0089,wallet,0,{}
+entity_normal_0090,wallet,0,{}
+entity_normal_0091,wallet,0,{}
+entity_normal_0092,wallet,0,{}
+entity_normal_0093,wallet,0,{}
+entity_normal_0094,wallet,0,{}
+entity_normal_0095,wallet,0,{}
+entity_normal_0096,wallet,0,{}
+entity_normal_0097,wallet,0,{}
+entity_normal_0098,wallet,0,{}
+entity_normal_0099,wallet,0,{}
+entity_peeling_chain,peeling_chain,1,"{""chain_length"": 8, ""initial_balance"": 37.63960504, ""peel_amount"": 0.17626918}"
+entity_mixer,mixing_structure,1,"{""fan_in"": 12, ""fan_out"": 12, ""denomination"": 0.44378649}"
+entity_burst,high_velocity_burst,1,"{""burst_count"": 20, ""avg_interval_seconds"": 17.95}"
+entity_dormant_0,dormant_to_active,1,"{""dormant_days"": 208, ""active_tx_count"": 23}"
+entity_dormant_1,dormant_to_active,1,"{""dormant_days"": 294, ""active_tx_count"": 11}"
+entity_dormant_2,dormant_to_active,1,"{""dormant_days"": 293, ""active_tx_count"": 16}"
+entity_dormant_3,dormant_to_active,1,"{""dormant_days"": 111, ""active_tx_count"": 19}"
+entity_dormant_4,dormant_to_active,1,"{""dormant_days"": 104, ""active_tx_count"": 11}"
+entity_geo_anomaly_0,geographic_anomaly,1,"{""country_count"": 8, ""time_span_hours"": 96.0}"
+entity_geo_anomaly_1,geographic_anomaly,1,"{""country_count"": 8, ""time_span_hours"": 96.0}"
+entity_geo_anomaly_2,geographic_anomaly,1,"{""country_count"": 8, ""time_span_hours"": 96.0}"
+entity_shared_infra_0,shared_infrastructure,1,"{""wallet_count"": 15, ""shared_ip"": ""161.107.143.94""}"
+entity_shared_infra_1,shared_infrastructure,1,"{""wallet_count"": 8, ""shared_ip"": ""145.199.135.204""}"
+entity_shared_infra_2,shared_infrastructure,1,"{""wallet_count"": 5, ""shared_ip"": ""109.215.199.30""}"
+entity_false_positive_0,false_positive,0,"{""reason"": ""normal_but_unusual""}"
+entity_false_positive_1,false_positive,0,"{""reason"": ""normal_but_unusual""}"
+entity_false_positive_2,false_positive,0,"{""reason"": ""normal_but_unusual""}"
+entity_false_positive_3,false_positive,0,"{""reason"": ""normal_but_unusual""}"
+entity_false_positive_4,false_positive,0,"{""reason"": ""normal_but_unusual""}"

@@ -1,5 +1,5 @@
 from typing import List, Dict, Any, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 import logging
 
@@ -38,11 +38,19 @@ class CorrelationService:
             if not txid or not obs_time:
                 continue
             
+            # Parse obs_time if it's a string
             if isinstance(obs_time, str):
                 try:
                     obs_time = datetime.fromisoformat(obs_time.replace("Z", "+00:00"))
                 except Exception:
                     continue
+            elif not isinstance(obs_time, datetime):
+                # Skip if timestamp is neither string nor datetime
+                continue
+            
+            # Ensure obs_time is timezone-aware for comparison with tx.timestamp
+            if obs_time.tzinfo is None:
+                obs_time = obs_time.replace(tzinfo=timezone.utc)
             
             for ip in [src_ip, dst_ip]:
                 if not ip:
@@ -50,7 +58,11 @@ class CorrelationService:
                 
                 related_txs = ip_tx_map.get(ip, [])
                 for tx in related_txs:
-                    time_diff = abs((tx.timestamp - obs_time).total_seconds())
+                    # Ensure both timestamps are timezone-aware for comparison
+                    tx_time = tx.timestamp
+                    if tx_time.tzinfo is None:
+                        tx_time = tx_time.replace(tzinfo=timezone.utc)
+                    time_diff = abs((tx_time - obs_time).total_seconds())
                     if time_diff <= self.temporal_window.total_seconds():
                         tx_ip_map[tx.txid].add(ip)
         
@@ -94,7 +106,14 @@ class CorrelationService:
         time_diffs = []
         for other_tx in all_txs:
             if other_tx.txid != tx.txid:
-                diff = abs((tx.timestamp - other_tx.timestamp).total_seconds())
+                # Ensure both timestamps are timezone-aware
+                t1 = tx.timestamp
+                t2 = other_tx.timestamp
+                if t1.tzinfo is None:
+                    t1 = t1.replace(tzinfo=timezone.utc)
+                if t2.tzinfo is None:
+                    t2 = t2.replace(tzinfo=timezone.utc)
+                diff = abs((t1 - t2).total_seconds())
                 time_diffs.append(diff)
         
         if time_diffs:

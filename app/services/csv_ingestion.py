@@ -1,16 +1,14 @@
 """
 CSV Ingestion Service
 =====================
-Reads the synthetic CSVs produced by scripts/generate_forensic_csvs.py
-and populates the SQLite database with transactions, wallets, network
-observations, and risk-scored alerts.
+Reads the synthetic CSVs and uses the shared detection pipeline
+for all risk scoring, detection, and alert generation.
 """
 
 import csv
 import json
 import uuid
 import logging
-import random
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -24,6 +22,8 @@ from app.db.repository import (
     NetworkObservationRepository,
     AlertRepository,
 )
+from app.models.schemas import NormalizedTransaction, RiskLevel
+from app.services.detection_pipeline import detection_pipeline, DetectionResult
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def _parse_json_field(value: str) -> list:
 
 
 def _parse_timestamp(ts_str: str) -> Optional[datetime]:
+    from datetime import timezone
     for fmt in [
         "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%dT%H:%M:%S",
@@ -50,18 +51,23 @@ def _parse_timestamp(ts_str: str) -> Optional[datetime]:
         "%Y-%m-%dT%H:%M:%S.%f",
     ]:
         try:
-            return datetime.strptime(ts_str.strip(), fmt)
+            dt = datetime.strptime(ts_str.strip(), fmt)
+            # Make timezone-aware (UTC)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
         except (ValueError, AttributeError):
             continue
     return None
 
 
 def _risk_level(score: float) -> str:
-    if score >= 75:
+    """Convert 0-1 risk score to risk level string."""
+    if score >= 0.75:
         return "CRITICAL"
-    elif score >= 50:
+    elif score >= 0.50:
         return "HIGH"
-    elif score >= 25:
+    elif score >= 0.25:
         return "MEDIUM"
     return "LOW"
 
@@ -95,100 +101,94 @@ def ingest_generated_csvs(
 
     # Read network logs indexed by txid
     network_by_txid: Dict[str, Dict[str, Any]] = {}
+    network_observations: List[Dict[str, Any]] = []
     if network_path.exists():
         with open(network_path, "r", encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 txid = row.get("txid", "")
                 if txid:
                     network_by_txid[txid] = row
+                    # Build network observation list
+                    obs = {
+                        "txid": txid,
+                        "timestamp": row.get("timestamp", ""),
+                        "src_ip": row.get("src_ip", ""),
+                        "dst_ip": row.get("dst_ip", ""),
+                        "src_port": row.get("src_port"),
+                        "dst_port": row.get("dst_port"),
+                        "geo_country": row.get("geo_country", ""),
+                        "asn": row.get("asn", ""),
+                    }
+                    network_observations.append(obs)
         logger.info("Loaded %d network log entries", len(network_by_txid))
 
-    # Read blockchain ledger
-    ledger_rows: List[Dict[str, Any]] = []
+    # Read blockchain ledger and build NormalizedTransaction objects
+    transactions: List[NormalizedTransaction] = []
     with open(ledger_path, "r", encoding="utf-8") as f:
         for row in csv.DictReader(f):
-            ledger_rows.append(row)
-    logger.info("Loaded %d ledger entries", len(ledger_rows))
-
-    # Build wallet statistics
-    wallet_stats: Dict[str, Dict[str, Any]] = defaultdict(lambda: {
-        "tx_count": 0, "total_in": 0.0, "total_out": 0.0,
-        "counterparties": set(), "fan_in": 0, "fan_out": 0,
-        "first_seen": None, "last_seen": None, "ips": set(),
-    })
-
-    for row in ledger_rows:
-        txid = row.get("txid", "")
-        input_addrs = _parse_json_field(row.get("input_addresses", "[]"))
-        output_addrs = _parse_json_field(row.get("output_addresses", "[]"))
-        input_amts = _parse_json_field(row.get("input_amounts", "[]"))
-        output_amts = _parse_json_field(row.get("output_amounts", "[]"))
-        net_info = network_by_txid.get(txid, {})
-        ts = _parse_timestamp(net_info.get("timestamp", ""))
-
-        for i, addr in enumerate(input_addrs):
-            if not addr:
-                continue
-            ws = wallet_stats[addr]
-            ws["tx_count"] += 1
-            if i < len(input_amts):
-                try:
-                    ws["total_out"] += float(input_amts[i])
-                except (ValueError, TypeError):
-                    pass
-            ws["fan_out"] += len(output_addrs)
-            for oa in output_addrs:
-                ws["counterparties"].add(oa)
-            if ts:
-                if ws["first_seen"] is None or ts < ws["first_seen"]:
-                    ws["first_seen"] = ts
-                if ws["last_seen"] is None or ts > ws["last_seen"]:
-                    ws["last_seen"] = ts
+            txid = row.get("txid", "")
+            net_info = network_by_txid.get(txid, {})
+            ts = _parse_timestamp(net_info.get("timestamp", "")) or datetime.utcnow()
+            input_addrs = _parse_json_field(row.get("input_addresses", "[]"))
+            output_addrs = _parse_json_field(row.get("output_addresses", "[]"))
+            input_amts = _parse_json_field(row.get("input_amounts", "[]"))
+            output_amts = _parse_json_field(row.get("output_amounts", "[]"))
+            
+            try:
+                fee = float(row.get("fee", 0.0))
+            except (ValueError, TypeError):
+                fee = 0.0
+            
+            input_amount = sum(float(a) for a in input_amts if a)
+            output_amount = sum(float(a) for a in output_amts if a)
+            
             src_ip = net_info.get("src_ip", "")
-            if src_ip:
-                ws["ips"].add(src_ip)
+            dst_ip = net_info.get("dst_ip", "")
+            src_port = net_info.get("src_port")
+            dst_port = net_info.get("dst_port")
+            
+            try:
+                src_port = int(src_port) if src_port else None
+            except (ValueError, TypeError):
+                src_port = None
+            try:
+                dst_port = int(dst_port) if dst_port else None
+            except (ValueError, TypeError):
+                dst_port = None
 
-        for i, addr in enumerate(output_addrs):
-            if not addr:
-                continue
-            ws = wallet_stats[addr]
-            ws["tx_count"] += 1
-            if i < len(output_amts):
-                try:
-                    ws["total_in"] += float(output_amts[i])
-                except (ValueError, TypeError):
-                    pass
-            ws["fan_in"] += len(input_addrs)
-            for ia in input_addrs:
-                ws["counterparties"].add(ia)
-            if ts:
-                if ws["first_seen"] is None or ts < ws["first_seen"]:
-                    ws["first_seen"] = ts
-                if ws["last_seen"] is None or ts > ws["last_seen"]:
-                    ws["last_seen"] = ts
+            tx = NormalizedTransaction(
+                txid=txid,
+                timestamp=ts,
+                inputs=input_addrs,
+                outputs=output_addrs,
+                input_amounts=[float(a) for a in input_amts if a],
+                output_amounts=[float(a) for a in output_amts if a],
+                fee=fee,
+                script_type=row.get("script_type", "P2PKH"),
+                source_ips=[src_ip] if src_ip else [],
+                destination_ips=[dst_ip] if dst_ip else [],
+                source_ports=[src_port] if src_port else [],
+                destination_ports=[dst_port] if dst_port else [],
+                geo_country=net_info.get("geo_country", ""),
+                asn=net_info.get("asn", ""),
+                input_amount=input_amount,
+                output_amount=output_amount,
+            )
+            transactions.append(tx)
 
-    logger.info("Computed stats for %d wallets", len(wallet_stats))
+    logger.info("Parsed %d transactions", len(transactions))
 
-    def _compute_risk(addr: str, stats: Dict) -> float:
-        score = 0.0
-        for prefix in ["1Peel", "3Mix", "1Ext"]:
-            if addr.startswith(prefix):
-                score += 60.0
-                break
-        if stats["tx_count"] > 10:
-            score += min(15.0, stats["tx_count"] * 0.5)
-        if stats["fan_out"] > 20:
-            score += min(10.0, stats["fan_out"] * 0.3)
-        if stats["fan_in"] > 15:
-            score += min(10.0, stats["fan_in"] * 0.3)
-        total_vol = stats["total_in"] + stats["total_out"]
-        if total_vol > 5.0:
-            score += min(10.0, total_vol * 0.5)
-        if len(stats.get("ips", set())) > 3:
-            score += 5.0
-        return min(100.0, max(0.0, score))
+    # RUN SHARED DETECTION PIPELINE
+    logger.info("Running shared detection pipeline...")
+    dataset_id = str(uuid.uuid4())
+    result = detection_pipeline.run(
+        transactions=transactions,
+        network_observations=network_observations,
+        dataset_id=dataset_id,
+        auto_train_ml=True,
+    )
 
-    # Write to database
+    # Write results to database
     with get_db_session() as db:
         dataset_repo = DatasetRepository(db)
         tx_repo = TransactionRepository(db)
@@ -203,7 +203,6 @@ def ingest_generated_csvs(
                 logger.info("Dataset '%s' already exists (id=%s), skipping", dataset_name, ds.id)
                 return ds.id
 
-        dataset_id = str(uuid.uuid4())
         dataset_repo.create(
             dataset_id=dataset_id,
             name=dataset_name,
@@ -214,24 +213,13 @@ def ingest_generated_csvs(
 
         # Insert transactions
         tx_records = []
-        for row in ledger_rows:
-            txid = row.get("txid", "")
-            net_info = network_by_txid.get(txid, {})
-            ts = _parse_timestamp(net_info.get("timestamp", "")) or datetime.utcnow()
-            input_addrs = _parse_json_field(row.get("input_addresses", "[]"))
-            output_addrs = _parse_json_field(row.get("output_addresses", "[]"))
-            input_amts = _parse_json_field(row.get("input_amounts", "[]"))
-            output_amts = _parse_json_field(row.get("output_amounts", "[]"))
-            try:
-                fee = float(row.get("fee", 0.0))
-            except (ValueError, TypeError):
-                fee = 0.0
-            input_amount = sum(float(a) for a in input_amts if a)
-            output_amount = sum(float(a) for a in output_amts if a)
+        for tx in transactions:
+            net_info = network_by_txid.get(tx.txid, {})
             src_ip = net_info.get("src_ip", "")
             dst_ip = net_info.get("dst_ip", "")
             src_port = net_info.get("src_port")
             dst_port = net_info.get("dst_port")
+            
             try:
                 src_port = int(src_port) if src_port else None
             except (ValueError, TypeError):
@@ -244,64 +232,56 @@ def ingest_generated_csvs(
             tx_records.append({
                 "id": str(uuid.uuid4()),
                 "dataset_id": dataset_id,
-                "txid": txid,
-                "timestamp": ts,
-                "input_addresses": input_addrs,
-                "output_addresses": output_addrs,
-                "input_amounts": [float(a) for a in input_amts if a],
-                "output_amounts": [float(a) for a in output_amts if a],
-                "fee": fee,
-                "script_type": row.get("script_type", "P2PKH"),
-                "source_ips": [src_ip] if src_ip else [],
-                "destination_ips": [dst_ip] if dst_ip else [],
-                "source_ports": [src_port] if src_port else [],
-                "destination_ports": [dst_port] if dst_port else [],
-                "geo_country": net_info.get("geo_country", ""),
-                "asn": net_info.get("asn", ""),
-                "input_amount": input_amount,
-                "output_amount": output_amount,
+                "txid": tx.txid,
+                "timestamp": tx.timestamp,
+                "input_addresses": tx.inputs,
+                "output_addresses": tx.outputs,
+                "input_amounts": tx.input_amounts,
+                "output_amounts": tx.output_amounts,
+                "fee": tx.fee,
+                "script_type": tx.script_type or "P2PKH",
+                "source_ips": tx.source_ips,
+                "destination_ips": tx.destination_ips,
+                "source_ports": tx.source_ports,
+                "destination_ports": tx.destination_ports,
+                "geo_country": tx.geo_country or "",
+                "asn": tx.asn or "",
+                "input_amount": tx.input_amount,
+                "output_amount": tx.output_amount,
             })
         tx_repo.bulk_insert(tx_records)
         logger.info("Inserted %d transactions", len(tx_records))
 
-        # Insert wallets
+        # Insert wallets from detection pipeline results
         wallet_records = []
-        for addr, stats in wallet_stats.items():
-            risk_score = _compute_risk(addr, stats)
-            total_vol = stats["total_in"] + stats["total_out"]
-            avg_val = total_vol / max(stats["tx_count"], 1)
+        for addr, wallet in result.wallets.items():
             wallet_records.append({
                 "id": str(uuid.uuid4()),
                 "dataset_id": dataset_id,
-                "address": addr,
-                "transaction_count": stats["tx_count"],
-                "total_in": round(stats["total_in"], 8),
-                "total_out": round(stats["total_out"], 8),
-                "average_transaction_value": round(avg_val, 8),
-                "unique_counterparties": len(stats["counterparties"]),
-                "fan_in": stats["fan_in"],
-                "fan_out": stats["fan_out"],
-                "first_seen": stats["first_seen"],
-                "last_seen": stats["last_seen"],
-                "risk_score": round(risk_score, 2),
-                "risk_level": _risk_level(risk_score),
-                "community_id": None,
-                "features": {
-                    "ip_count": len(stats.get("ips", set())),
-                    "country_count": len(stats.get("countries", set())),
-                    "suspicious_flags": stats.get("suspicious_flags", 0),
-                    "cluster_size": 1,
-                },
+                "address": wallet.address,
+                "transaction_count": wallet.transaction_count,
+                "total_in": wallet.total_in,
+                "total_out": wallet.total_out,
+                "average_transaction_value": wallet.average_transaction_value,
+                "unique_counterparties": wallet.unique_counterparties,
+                "fan_in": wallet.fan_in,
+                "fan_out": wallet.fan_out,
+                "first_seen": wallet.first_seen,
+                "last_seen": wallet.last_seen,
+                "risk_score": wallet.risk_score,
+                "risk_level": wallet.risk_level.value,
+                "community_id": wallet.community_id,
+                "features": wallet.features.model_dump() if hasattr(wallet.features, 'model_dump') else wallet.features,
             })
         wallet_repo.bulk_insert(wallet_records)
         logger.info("Inserted %d wallets", len(wallet_records))
 
         # Insert network observations
         netobs_records = []
-        for txid, net_info in network_by_txid.items():
-            ts = _parse_timestamp(net_info.get("timestamp", "")) or datetime.utcnow()
-            src_port = net_info.get("src_port")
-            dst_port = net_info.get("dst_port")
+        for obs in network_observations:
+            ts = _parse_timestamp(obs.get("timestamp", "")) or datetime.utcnow()
+            src_port = obs.get("src_port")
+            dst_port = obs.get("dst_port")
             try:
                 src_port = int(src_port) if src_port else None
             except (ValueError, TypeError):
@@ -314,52 +294,36 @@ def ingest_generated_csvs(
                 "id": str(uuid.uuid4()),
                 "dataset_id": dataset_id,
                 "timestamp": ts,
-                "src_ip": net_info.get("src_ip", "0.0.0.0"),
-                "dst_ip": net_info.get("dst_ip", "0.0.0.0"),
+                "src_ip": obs.get("src_ip", "0.0.0.0"),
+                "dst_ip": obs.get("dst_ip", "0.0.0.0"),
                 "src_port": src_port,
                 "dst_port": dst_port,
-                "txid": txid,
-                "geo_country": net_info.get("geo_country", ""),
-                "asn": net_info.get("asn", ""),
+                "txid": obs.get("txid", ""),
+                "geo_country": obs.get("geo_country", ""),
+                "asn": obs.get("asn", ""),
             })
         netobs_repo.bulk_insert(netobs_records)
         logger.info("Inserted %d network observations", len(netobs_records))
 
-        # Generate alerts for high-risk wallets
+        # Insert alerts from detection pipeline
         alert_records = []
-        high_risk = [w for w in wallet_records if w["risk_score"] >= 25.0]
-        for w in sorted(high_risk, key=lambda x: x["risk_score"], reverse=True):
-            reasons = []
-            addr = w["address"]
-            if addr.startswith("1Peel"):
-                reasons.append({"signal": "Peeling Chain Pattern", "description": "Sequential peel-off of small amounts from a large UTXO", "contribution": 45, "evidence_type": "heuristic"})
-            elif addr.startswith("3Mix"):
-                reasons.append({"signal": "Mixer/Tumbler Activity", "description": "Fan-in/fan-out structure with uniform output amounts", "contribution": 55, "evidence_type": "heuristic"})
-            elif addr.startswith("1Ext"):
-                reasons.append({"signal": "High-Velocity Extortion", "description": "Rapid burst of small transactions from single cluster", "contribution": 50, "evidence_type": "observed"})
-            if w["fan_out"] > 10:
-                reasons.append({"signal": "High Dispersion", "description": f"Fan-out of {w['fan_out']}", "contribution": 20, "evidence_type": "model_derived"})
-            if w["transaction_count"] > 5:
-                reasons.append({"signal": "Elevated Velocity", "description": f"{w['transaction_count']} transactions", "contribution": 15, "evidence_type": "model_derived"})
-            if not reasons:
-                reasons.append({"signal": "Behavioral Anomaly", "description": "Statistical outlier", "contribution": 30, "evidence_type": "model_derived"})
-
+        for alert in result.alerts:
             alert_records.append({
                 "id": str(uuid.uuid4()),
                 "dataset_id": dataset_id,
-                "entity_id": addr,
-                "entity_type": "wallet",
-                "risk_score": w["risk_score"],
-                "risk_level": w["risk_level"],
-                "reasons": list(reasons),
-                "related_transactions": [],
-                "related_wallets": [],
-                "related_ips": list(stats.get("ips", set())),
-                "related_asns": list(stats.get("asns", set())),
-                "related_countries": list(stats.get("countries", set())),
-                "graph_statistics": {},
-                "correlation_evidence": [],
-                "created_at": datetime.utcnow(),
+                "entity_id": alert.entity_id,
+                "entity_type": alert.entity_type,
+                "risk_score": alert.risk_score,
+                "risk_level": alert.risk_level.value,
+                "reasons": [r.model_dump() for r in alert.reasons],
+                "related_transactions": alert.related_transactions,
+                "related_wallets": alert.related_wallets,
+                "related_ips": alert.related_ips,
+                "related_asns": alert.related_asns,
+                "related_countries": alert.related_countries,
+                "graph_statistics": alert.graph_statistics,
+                "correlation_evidence": [c.model_dump() for c in alert.correlation_evidence],
+                "created_at": alert.timestamp,
             })
         alert_repo.bulk_insert(alert_records)
         logger.info("Inserted %d alerts", len(alert_records))
@@ -367,7 +331,7 @@ def ingest_generated_csvs(
         dataset_repo.update_status(
             dataset_id=dataset_id,
             status="processed",
-            valid_records=len(ledger_rows),
+            valid_records=len(transactions),
             invalid_records=0,
             duplicates=0,
         )
