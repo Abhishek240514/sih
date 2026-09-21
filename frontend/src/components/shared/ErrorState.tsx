@@ -1,5 +1,4 @@
 import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface ErrorStateProps {
   message?: string;
@@ -9,18 +8,30 @@ interface ErrorStateProps {
 
 export function ErrorState({ message = 'Something went wrong', onRetry, className }: ErrorStateProps) {
   return (
-    <div className={cn('flex flex-col items-center justify-center py-12 px-4 text-center', className)}>
-      <div className="p-3 rounded-full bg-red-500/10 mb-4">
-        <AlertTriangle className="w-8 h-8 text-red-400" />
+    <div
+      className={`flex flex-col items-center justify-center text-center ${className || ''}`}
+      style={{ padding: '48px 24px' }}
+    >
+      <div
+        className="flex items-center justify-center rounded-2xl mb-4"
+        style={{
+          width: 60,
+          height: 60,
+          background: 'rgba(255, 61, 85, 0.08)',
+          border: '1px solid rgba(255, 61, 85, 0.18)',
+        }}
+      >
+        <AlertTriangle style={{ width: 26, height: 26, color: '#ff3d55' }} />
       </div>
-      <h3 className="text-lg font-semibold text-slate-300 mb-2">Error</h3>
-      <p className="text-sm text-slate-500 max-w-md mb-6">{message}</p>
+      <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 8 }}>
+        Failed to Load
+      </h3>
+      <p style={{ fontSize: 13, color: 'var(--text-muted)', maxWidth: 340, lineHeight: 1.6, marginBottom: onRetry ? 20 : 0 }}>
+        {message}
+      </p>
       {onRetry && (
-        <button
-          onClick={onRetry}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-sm font-medium text-slate-300 transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
+        <button onClick={onRetry} className="btn-secondary" style={{ fontSize: 13 }}>
+          <RefreshCw style={{ width: 14, height: 14 }} />
           Retry
         </button>
       )}

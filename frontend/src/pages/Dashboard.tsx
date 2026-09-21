@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import {
   ArrowRightLeft,
   Wallet,
@@ -6,6 +7,7 @@ import {
   MapPin,
   AlertTriangle,
   ShieldAlert,
+  Database,
 } from 'lucide-react';
 import {
   PieChart,
@@ -27,14 +29,12 @@ import { CardSkeleton, TableSkeleton } from '@/components/shared/Skeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ErrorState } from '@/components/shared/ErrorState';
 import { formatNumber, formatRiskScore, truncateAddress, formatTimestamp } from '@/lib/utils';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
 
 const RISK_COLORS: Record<string, string> = {
-  CRITICAL: '#ef4444',
-  HIGH: '#f97316',
-  MEDIUM: '#eab308',
-  LOW: '#10b981',
+  CRITICAL: '#ff3d55',
+  HIGH: '#ff8c00',
+  MEDIUM: '#fbbf24',
+  LOW: '#10d98a',
 };
 
 const VOLUME_PRESETS = [
@@ -42,6 +42,15 @@ const VOLUME_PRESETS = [
   { label: '7d', buckets: 168 },
   { label: '30d', buckets: 30 },
 ];
+
+const CHART_STYLE = {
+  background: '#060e1e',
+  border: '1px solid rgba(99, 155, 255, 0.1)',
+  borderRadius: '10px',
+  fontSize: '12px',
+  color: '#f0f6ff',
+  padding: '8px 12px',
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -56,126 +65,201 @@ export default function Dashboard() {
 
   if (!activeDatasetId) {
     return (
-      <EmptyState
-        icon={<Database className="w-16 h-16" />}
-        title="No Dataset Selected"
-        description="Upload and process a dataset to start analyzing Bitcoin transactions."
-        action={
-          <button
-            onClick={() => navigate('/datasets')}
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
-          >
-            Go to Datasets
-          </button>
-        }
-      />
+      <div className="glass-card animate-fade-in" style={{ minHeight: 400 }}>
+        <EmptyState
+          icon={<Database style={{ width: 32, height: 32 }} />}
+          title="No Dataset Selected"
+          description="Upload and process a Bitcoin transaction dataset to start your forensic analysis."
+          action={
+            <button className="btn-primary" onClick={() => navigate('/datasets')}>
+              <Database style={{ width: 15, height: 15 }} />
+              Go to Datasets
+            </button>
+          }
+        />
+      </div>
     );
   }
 
   const summary = summaryQuery.data;
   const riskData = riskQuery.data?.distribution
-    ? Object.entries(riskQuery.data.distribution).map(([name, value]) => ({ name, value }))
+    ? Object.entries(riskQuery.data.distribution)
+        .filter(([, v]) => (v as number) > 0)
+        .map(([name, value]) => ({ name, value }))
     : [];
+
   const volumeData = (volumeQuery.data?.volume || []).map((v: any) => {
     const d = new Date(v.timestamp);
     return {
       ...v,
-      bucket: `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`,
+      bucket: `${d.getMonth() + 1}/${d.getDate()} ${d.getHours().toString().padStart(2, '0')}h`,
     };
   });
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">Bitcoin Forensic Intelligence Overview</p>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* Page Header */}
+      <div className="page-header" style={{ marginBottom: 0 }}>
+        <div>
+          <h1 className="page-title">Intelligence Dashboard</h1>
+          <p className="page-subtitle">Real-time Bitcoin forensic analysis overview</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            style={{
+              padding: '5px 12px',
+              borderRadius: 999,
+              fontSize: 11,
+              fontWeight: 600,
+              background: 'rgba(59, 124, 249, 0.1)',
+              color: 'var(--accent-blue)',
+              border: '1px solid rgba(59, 124, 249, 0.2)',
+              letterSpacing: '0.04em',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            DATASET: {activeDatasetId.slice(0, 16)}...
+          </span>
+        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Grid */}
       {summaryQuery.isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => <CardSkeleton key={i} />)}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14 }}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CardSkeleton key={i} />
+          ))}
         </div>
       ) : summaryQuery.isError ? (
-        <ErrorState message="Failed to load summary" onRetry={() => summaryQuery.refetch()} />
+        <ErrorState message="Failed to load summary statistics" onRetry={() => summaryQuery.refetch()} />
       ) : summary ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <StatCard icon={<ArrowRightLeft className="w-5 h-5" />} label="Transactions" value={formatNumber(summary.transactions)} iconColor="text-blue-400" />
-          <StatCard icon={<Wallet className="w-5 h-5" />} label="Wallets" value={formatNumber(summary.wallets)} iconColor="text-purple-400" />
-          <StatCard icon={<Globe className="w-5 h-5" />} label="IPs" value={formatNumber(summary.ips)} iconColor="text-cyan-400" />
-          <StatCard icon={<MapPin className="w-5 h-5" />} label="Countries" value={formatNumber(summary.countries)} iconColor="text-amber-400" />
-          <StatCard icon={<AlertTriangle className="w-5 h-5" />} label="Total Alerts" value={formatNumber(summary.alerts)} iconColor="text-orange-400" />
-          <StatCard icon={<ShieldAlert className="w-5 h-5" />} label="Critical/High" value={`${summary.critical_alerts}/${summary.high_alerts}`} iconColor="text-red-400" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}
+          className="md:grid-cols-3 lg:grid-cols-6"
+        >
+          <StatCard
+            icon={<ArrowRightLeft style={{ width: 18, height: 18 }} />}
+            label="Transactions"
+            value={formatNumber(summary.transactions)}
+            accentColor="#3b7cf9"
+            iconBg="rgba(59, 124, 249, 0.12)"
+          />
+          <StatCard
+            icon={<Wallet style={{ width: 18, height: 18 }} />}
+            label="Wallets"
+            value={formatNumber(summary.wallets)}
+            accentColor="#9b5cf6"
+            iconBg="rgba(155, 92, 246, 0.12)"
+          />
+          <StatCard
+            icon={<Globe style={{ width: 18, height: 18 }} />}
+            label="IP Addresses"
+            value={formatNumber(summary.ips)}
+            accentColor="#06d6f0"
+            iconBg="rgba(6, 214, 240, 0.10)"
+          />
+          <StatCard
+            icon={<MapPin style={{ width: 18, height: 18 }} />}
+            label="Countries"
+            value={formatNumber(summary.countries)}
+            accentColor="#f59e0b"
+            iconBg="rgba(245, 158, 11, 0.12)"
+          />
+          <StatCard
+            icon={<AlertTriangle style={{ width: 18, height: 18 }} />}
+            label="Total Alerts"
+            value={formatNumber(summary.alerts)}
+            accentColor="#ff8c00"
+            iconBg="rgba(255, 140, 0, 0.12)"
+          />
+          <StatCard
+            icon={<ShieldAlert style={{ width: 18, height: 18 }} />}
+            label="Critical / High"
+            value={`${summary.critical_alerts} / ${summary.high_alerts}`}
+            accentColor="#ff3d55"
+            iconBg="rgba(255, 61, 85, 0.10)"
+          />
         </div>
       ) : null}
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Risk Distribution */}
-        <div className="glass-card p-5">
-          <h3 className="text-sm font-semibold text-slate-300 mb-4">Risk Distribution</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 20 }}>
+        {/* Risk Distribution Donut */}
+        <div className="glass-card" style={{ padding: 20 }}>
+          <div style={{ marginBottom: 16 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Risk Distribution</h3>
+            <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 3 }}>Wallet risk level breakdown</p>
+          </div>
           {riskQuery.isLoading ? (
-            <div className="h-48 animate-shimmer rounded-lg" />
+            <div className="animate-shimmer rounded-xl" style={{ height: 200 }} />
           ) : riskData.length > 0 ? (
-            <div className="flex items-center gap-4">
-              <ResponsiveContainer width="100%" height={200}>
+            <div>
+              <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
                   <Pie
                     data={riskData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={80}
+                    innerRadius={52}
+                    outerRadius={76}
                     paddingAngle={3}
                     dataKey="value"
                     stroke="none"
                   >
                     {riskData.map((entry) => (
-                      <Cell key={entry.name} fill={RISK_COLORS[entry.name] || '#64748b'} />
+                      <Cell
+                        key={entry.name}
+                        fill={RISK_COLORS[entry.name] || '#4a6280'}
+                        style={{ filter: `drop-shadow(0 0 6px ${RISK_COLORS[entry.name] || '#4a6280'}60)` }}
+                      />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: '#1a1f2e',
-                      border: '1px solid #2a3041',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      color: '#f1f5f9',
-                    }}
-                  />
+                  <Tooltip contentStyle={CHART_STYLE} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="space-y-2 text-xs">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 4 }}>
                 {riskData.map((entry) => (
-                  <div key={entry.name} className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: RISK_COLORS[entry.name] }} />
-                    <span className="text-slate-400">{entry.name}</span>
-                    <span className="text-white font-medium ml-auto">{entry.value}</span>
+                  <div key={entry.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: RISK_COLORS[entry.name] || '#4a6280', boxShadow: `0 0 6px ${RISK_COLORS[entry.name]}60` }} />
+                      <span style={{ color: 'var(--text-secondary)' }}>{entry.name}</span>
+                    </div>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{entry.value as number}</span>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-8">No data</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '40px 0' }}>No data available</p>
           )}
         </div>
 
-        {/* Transaction Volume */}
-        <div className="glass-card p-5 lg:col-span-2">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-300">Transaction Volume</h3>
-            <div className="flex gap-1">
+        {/* Transaction Volume Chart */}
+        <div className="glass-card" style={{ padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div>
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Transaction Volume</h3>
+              <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 3 }}>BTC flow over time</p>
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
               {VOLUME_PRESETS.map(({ label, buckets }) => (
                 <button
                   key={label}
                   onClick={() => setVolumeBuckets(buckets)}
-                  className={cn(
-                    'px-3 py-1 rounded-md text-xs font-medium transition-colors',
-                    volumeBuckets === buckets
-                      ? 'bg-blue-500/20 text-blue-400'
-                      : 'text-slate-500 hover:text-slate-300'
-                  )}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 8,
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                    border: 'none',
+                    transition: 'all 0.2s ease',
+                    background: volumeBuckets === buckets
+                      ? 'rgba(59, 124, 249, 0.2)'
+                      : 'transparent',
+                    color: volumeBuckets === buckets
+                      ? 'var(--accent-blue)'
+                      : 'var(--text-muted)',
+                  }}
                 >
                   {label}
                 </button>
@@ -183,137 +267,190 @@ export default function Dashboard() {
             </div>
           </div>
           {volumeQuery.isLoading ? (
-            <div className="h-48 animate-shimmer rounded-lg" />
+            <div className="animate-shimmer rounded-xl" style={{ height: 200 }} />
           ) : volumeData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={volumeData}>
+            <ResponsiveContainer width="100%" height={210}>
+              <AreaChart data={volumeData} margin={{ left: -20, right: 4 }}>
                 <defs>
-                  <linearGradient id="volumeGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                  <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#3b7cf9" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#3b7cf9" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="bucket" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#1a1f2e',
-                    border: '1px solid #2a3041',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    color: '#f1f5f9',
-                  }}
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(99, 155, 255, 0.05)" />
+                <XAxis
+                  dataKey="bucket"
+                  tick={{ fontSize: 10, fill: '#4a6280' }}
+                  axisLine={false}
+                  tickLine={false}
+                  interval="preserveStartEnd"
                 />
-                <Area type="monotone" dataKey="volume" stroke="#3b82f6" strokeWidth={2} fill="url(#volumeGradient)" name="Volume (BTC)" />
+                <YAxis
+                  tick={{ fontSize: 10, fill: '#4a6280' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip contentStyle={CHART_STYLE} />
+                <Area
+                  type="monotone"
+                  dataKey="volume"
+                  stroke="#3b7cf9"
+                  strokeWidth={2}
+                  fill="url(#volGrad)"
+                  name="Volume (BTC)"
+                  dot={false}
+                  activeDot={{ r: 4, fill: '#3b7cf9', strokeWidth: 0 }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-8">No volume data</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '40px 0' }}>
+              No volume data available
+            </p>
           )}
         </div>
       </div>
 
       {/* Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Top Alerts */}
-        <div className="glass-card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-color)]">
-            <h3 className="text-sm font-semibold text-slate-300">Top Alerts</h3>
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border-color)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3d55', boxShadow: '0 0 8px rgba(255,61,85,0.6)' }} />
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>Top Alerts</h3>
+            </div>
             <button
               onClick={() => navigate('/alerts')}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              style={{ fontSize: 12, color: 'var(--accent-blue)', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
             >
               View All →
             </button>
           </div>
           {topAlertsQuery.isLoading ? (
-            <div className="p-4"><TableSkeleton rows={5} cols={4} /></div>
+            <div style={{ padding: 16 }}><TableSkeleton rows={5} cols={4} /></div>
           ) : topAlertsQuery.data?.alerts?.length ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--border-color)]">
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Entity</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Score</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Level</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Time</th>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Entity</th>
+                  <th>Score</th>
+                  <th>Level</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topAlertsQuery.data.alerts.map((alert: any) => (
+                  <tr
+                    key={alert.alert_id}
+                    className="clickable"
+                    onClick={() => navigate(`/investigations/${alert.entity_id}`)}
+                  >
+                    <td>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: 'var(--text-secondary)' }}>
+                        {truncateAddress(alert.entity_id)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                        {formatRiskScore(alert.risk_score)}
+                      </span>
+                    </td>
+                    <td><RiskBadge level={alert.risk_level} /></td>
+                    <td>
+                      <span style={{ fontSize: 11.5, color: 'var(--text-muted)' }}>
+                        {formatTimestamp(alert.timestamp)}
+                      </span>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {topAlertsQuery.data.alerts.map((alert) => (
-                    <tr
-                      key={alert.alert_id}
-                      onClick={() => navigate(`/investigations/${alert.entity_id}`)}
-                      className="border-b border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] cursor-pointer transition-colors"
-                    >
-                      <td className="px-5 py-3 font-mono text-xs text-slate-300">{truncateAddress(alert.entity_id)}</td>
-                      <td className="px-5 py-3 font-semibold text-white">{formatRiskScore(alert.risk_score)}</td>
-                      <td className="px-5 py-3"><RiskBadge level={alert.risk_level} /></td>
-                      <td className="px-5 py-3 text-xs text-slate-500">{formatTimestamp(alert.timestamp)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-8">No alerts</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '40px 0' }}>
+              No alerts generated
+            </p>
           )}
         </div>
 
         {/* Top Wallets */}
-        <div className="glass-card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border-color)]">
-            <h3 className="text-sm font-semibold text-slate-300">Top Wallets</h3>
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border-color)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#9b5cf6', boxShadow: '0 0 8px rgba(155,92,246,0.6)' }} />
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>High-Risk Wallets</h3>
+            </div>
             <button
               onClick={() => navigate('/entities')}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              style={{ fontSize: 12, color: 'var(--accent-blue)', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}
             >
               View All →
             </button>
           </div>
           {topWalletsQuery.isLoading ? (
-            <div className="p-4"><TableSkeleton rows={5} cols={5} /></div>
+            <div style={{ padding: 16 }}><TableSkeleton rows={5} cols={5} /></div>
           ) : topWalletsQuery.data?.wallets?.length ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--border-color)]">
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">TXs</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Volume</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Score</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Level</th>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th style={{ textAlign: 'right' }}>TXs</th>
+                  <th style={{ textAlign: 'right' }}>Volume</th>
+                  <th style={{ textAlign: 'right' }}>Score</th>
+                  <th>Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {topWalletsQuery.data.wallets.map((w: any) => (
+                  <tr
+                    key={w.address}
+                    className="clickable"
+                    onClick={() => navigate(`/investigations/${w.address}`)}
+                  >
+                    <td>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: 'var(--text-secondary)' }}>
+                        {truncateAddress(w.address)}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontSize: 12.5 }}>
+                      {w.transaction_count}
+                    </td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontSize: 12.5 }}>
+                      {(w.total_in + w.total_out).toFixed(2)}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13 }}>
+                        {formatRiskScore(w.risk_score)}
+                      </span>
+                    </td>
+                    <td><RiskBadge level={w.risk_level} /></td>
                   </tr>
-                </thead>
-                <tbody>
-                  {topWalletsQuery.data.wallets.map((w: any) => (
-                    <tr
-                      key={w.address}
-                      onClick={() => navigate(`/investigations/${w.address}`)}
-                      className="border-b border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] cursor-pointer transition-colors"
-                    >
-                      <td className="px-5 py-3 font-mono text-xs text-slate-300">{truncateAddress(w.address)}</td>
-                      <td className="px-5 py-3 text-slate-300">{w.transaction_count}</td>
-                      <td className="px-5 py-3 text-slate-300">{(w.total_in + w.total_out).toFixed(2)}</td>
-                      <td className="px-5 py-3 font-semibold text-white">{formatRiskScore(w.risk_score)}</td>
-                      <td className="px-5 py-3"><RiskBadge level={w.risk_level} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))}
+              </tbody>
+            </table>
           ) : (
-            <p className="text-sm text-slate-500 text-center py-8">No wallets</p>
+            <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, padding: '40px 0' }}>
+              No wallet data
+            </p>
           )}
         </div>
       </div>
     </div>
-  );
-}
-
-function Database(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
   );
 }

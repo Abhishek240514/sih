@@ -19,7 +19,9 @@ export default function Entities() {
 
   const entitiesQuery = useEntities(page * PAGE_SIZE, PAGE_SIZE);
 
-  const wallets: any[] = Array.isArray(entitiesQuery.data) ? entitiesQuery.data : (entitiesQuery.data as any)?.wallets || [];
+  const wallets: any[] = Array.isArray(entitiesQuery.data)
+    ? entitiesQuery.data
+    : (entitiesQuery.data as any)?.wallets || [];
   const filteredWallets = search
     ? wallets.filter((w: any) => w.address.toLowerCase().includes(search.toLowerCase()))
     : wallets;
@@ -35,50 +37,61 @@ export default function Entities() {
       risk_level: w.risk_level,
       community_id: w.community_id,
     }));
-    const csv = toCSV(data);
-    downloadFile(csv, `entities_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    downloadFile(toCSV(data), `entities_export_${new Date().toISOString().slice(0, 10)}.csv`);
   };
 
   if (!activeDatasetId) {
     return (
-      <EmptyState
-        icon={<Users className="w-16 h-16" />}
-        title="No Dataset Selected"
-        description="Select a processed dataset to browse entities."
-      />
+      <div className="glass-card animate-fade-in" style={{ minHeight: 400 }}>
+        <EmptyState
+          icon={<Users style={{ width: 28, height: 28 }} />}
+          title="No Dataset Selected"
+          description="Select a processed dataset to browse wallet entities."
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">Entities</h1>
-          <p className="text-sm text-slate-500 mt-1">Browse and search wallet entities</p>
+          <h1 className="page-title">Entities</h1>
+          <p className="page-subtitle">Browse and search Bitcoin wallet entities</p>
         </div>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border-color)] hover:border-[var(--border-hover)] bg-slate-900/50 text-sm text-slate-300 transition-colors"
-        >
-          <Download className="w-4 h-4" />
+        <button className="btn-secondary" onClick={handleExport}>
+          <Download style={{ width: 14, height: 14 }} />
           Export CSV
         </button>
       </div>
 
       {/* Search */}
-      <div className="glass-card p-4">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+      <div className="glass-card" style={{ padding: 14 }}>
+        <div style={{ position: 'relative', maxWidth: 440 }}>
+          <Search
+            style={{
+              position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+              width: 15, height: 15, color: 'var(--text-muted)',
+            }}
+          />
           <input
             type="text"
-            placeholder="Search by address..."
+            placeholder="Search by wallet address..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-900/50 border border-[var(--border-color)] focus:border-blue-500/30 focus:outline-none text-sm text-slate-300 placeholder:text-slate-600 transition-colors"
+            className="input-field"
+            style={{ paddingLeft: 38, paddingRight: search ? 36 : 14 }}
           />
           {search && (
-            <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-              <X className="w-4 h-4" />
+            <button
+              onClick={() => setSearch('')}
+              style={{
+                position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)',
+              }}
+            >
+              <X style={{ width: 14, height: 14 }} />
             </button>
           )}
         </div>
@@ -86,44 +99,73 @@ export default function Entities() {
 
       {/* Table */}
       {entitiesQuery.isLoading ? (
-        <div className="glass-card p-4"><TableSkeleton rows={10} cols={6} /></div>
+        <div className="glass-card" style={{ padding: 20 }}>
+          <TableSkeleton rows={10} cols={7} />
+        </div>
       ) : entitiesQuery.isError ? (
         <ErrorState message="Failed to load entities" onRetry={() => entitiesQuery.refetch()} />
       ) : filteredWallets.length === 0 ? (
-        <EmptyState
-          icon={<Users className="w-12 h-12" />}
-          title="No Entities Found"
-          description={search ? 'Try adjusting your search.' : 'No entities available for this dataset.'}
-        />
+        <div className="glass-card">
+          <EmptyState
+            icon={<Users style={{ width: 28, height: 28 }} />}
+            title="No Entities Found"
+            description={search ? 'Try adjusting your search.' : 'No entities available for this dataset.'}
+          />
+        </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
               <thead>
-                <tr className="border-b border-[var(--border-color)]">
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Address</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">TX Count</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Total In</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Total Out</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Score</th>
-                  <th className="px-5 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Level</th>
-                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Community</th>
+                <tr>
+                  <th>Wallet Address</th>
+                  <th style={{ textAlign: 'right' }}>TX Count</th>
+                  <th style={{ textAlign: 'right' }}>Total In</th>
+                  <th style={{ textAlign: 'right' }}>Total Out</th>
+                  <th style={{ textAlign: 'right' }}>Risk Score</th>
+                  <th>Risk Level</th>
+                  <th style={{ textAlign: 'right' }}>Community</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredWallets.map((w: any) => (
                   <tr
                     key={w.address}
+                    className="clickable"
                     onClick={() => navigate(`/investigations/${w.address}`)}
-                    className="border-b border-[var(--border-color)] hover:bg-[var(--bg-card-hover)] cursor-pointer transition-colors"
                   >
-                    <td className="px-5 py-3 font-mono text-xs text-slate-300">{truncateAddress(w.address)}</td>
-                    <td className="px-5 py-3 text-right text-slate-300">{w.transaction_count}</td>
-                    <td className="px-5 py-3 text-right text-slate-300">{formatBTC(w.total_in)}</td>
-                    <td className="px-5 py-3 text-right text-slate-300">{formatBTC(w.total_out)}</td>
-                    <td className="px-5 py-3 text-right font-semibold text-white">{formatRiskScore(w.risk_score)}</td>
-                    <td className="px-5 py-3"><RiskBadge level={w.risk_level} /></td>
-                    <td className="px-5 py-3 text-right text-xs text-slate-500">{w.community_id ?? '—'}</td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(59,124,249,0.08)', border: '1px solid rgba(59,124,249,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" strokeWidth="2">
+                            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                          </svg>
+                        </div>
+                        <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: 'var(--text-secondary)' }}>
+                          {truncateAddress(w.address)}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'right', color: 'var(--text-secondary)', fontSize: 13 }}>
+                      {w.transaction_count?.toLocaleString()}
+                    </td>
+                    <td style={{ textAlign: 'right', color: '#10d98a', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
+                      {formatBTC(w.total_in)}
+                    </td>
+                    <td style={{ textAlign: 'right', color: '#ff8c00', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>
+                      {formatBTC(w.total_out)}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: 13.5 }}>
+                        {formatRiskScore(w.risk_score)}
+                      </span>
+                    </td>
+                    <td><RiskBadge level={w.risk_level} /></td>
+                    <td style={{ textAlign: 'right' }}>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, color: 'var(--text-muted)' }}>
+                        {w.community_id ?? '—'}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -131,24 +173,24 @@ export default function Entities() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-5 py-3 border-t border-[var(--border-color)]">
-            <span className="text-xs text-slate-500">
-              Page {page + 1} • Showing {filteredWallets.length} results
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Page {page + 1} &middot; {filteredWallets.length} records
             </span>
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: 8 }}>
               <button
+                className="pagination-btn"
                 onClick={() => setPage(Math.max(0, page - 1))}
                 disabled={page === 0}
-                className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                Previous
+                ← Previous
               </button>
               <button
+                className="pagination-btn"
                 onClick={() => setPage(page + 1)}
                 disabled={wallets.length < PAGE_SIZE}
-                className="px-3 py-1.5 rounded-md text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
-                Next
+                Next →
               </button>
             </div>
           </div>
