@@ -59,12 +59,12 @@ def download_and_extract(url: str, dest_dir: Path, target_filename: str) -> bool
     try:
         logger.info(f"Downloading from {url[:80]}...")
         req = Request(url, headers={'User-Agent': 'bitcoin-forensics/1.0'})
-        
+
         with tempfile.NamedTemporaryFile(suffix='.tar.gz', delete=False) as tmp:
             with urlopen(req, timeout=60) as response:
                 tmp.write(response.read())
             tmp_path = tmp.name
-        
+
         # Extract the .mmdb file
         with tarfile.open(tmp_path, 'r:gz') as tar:
             for member in tar.getmembers():
@@ -73,24 +73,45 @@ def download_and_extract(url: str, dest_dir: Path, target_filename: str) -> bool
                     tar.extract(member, dest_dir)
                     logger.info(f"Extracted {target_filename} to {dest_dir}")
                     break
-        
+
         os.unlink(tmp_path)
         return True
-        
+
     except Exception as e:
         logger.error(f"Failed to download/extract: {e}")
         return False
 
 
 def verify_database(db_path: Path) -> bool:
-    """Verify a GeoIP database can be opened."""
+    """Verify a GeoIP database can be opened and queried correctly."""
     try:
         import geoip2.database
         reader = geoip2.database.Reader(str(db_path))
-        # Test lookup
-        reader.country("8.8.8.8")
+
+        # Determine database type and use appropriate method
+        db_name = db_path.name
+        if "Country" in db_name:
+            # Country database uses .country() method
+            response = reader.country("8.8.8.8")
+            country_code = response.country.iso_code
+            logger.info(f"Verified Country database: {db_path.name} (country: {country_code})")
+        elif "ASN" in db_name:
+            # ASN database uses .asn() method
+            response = reader.asn("8.8.8.8")
+            asn = response.autonomous_system_number
+            logger.info(f"Verified ASN database: {db_path.name} (ASN: AS{asn})")
+        else:
+            # Unknown database type, try country first then asn
+            try:
+                response = reader.country("8.8.8.8")
+                country_code = response.country.iso_code
+                logger.info(f"Verified database (country): {db_path.name} (country: {country_code})")
+            except AttributeError:
+                response = reader.asn("8.8.8.8")
+                asn = response.autonomous_system_number
+                logger.info(f"Verified database (ASN): {db_path.name} (ASN: AS{asn})")
+
         reader.close()
-        logger.info(f"Verified: {db_path.name}")
         return True
     except Exception as e:
         logger.error(f"Database verification failed for {db_path}: {e}")
@@ -108,7 +129,7 @@ MaxMind GeoLite2 databases require a free MaxMind account.
 1. Create a free account at: https://www.maxmind.com/en/geolite2/signup
 2. Generate a license key at: https://www.maxmind.com/en/accounts/current/license-key
 3. Run this script with your license key:
-   
+
    export MAXMIND_LICENSE_KEY="your_license_key_here"
    python scripts/setup_geoip.py
 
@@ -125,7 +146,7 @@ Download from: https://dev.maxmind.com/geoip/geolite2-free-geolocation-data
 def main():
     geoip_dir = setup_geoip_directory()
     logger.info(f"GeoIP directory: {geoip_dir}")
-    
+
     # Check existing
     country_exists, asn_exists = check_existing_databases(geoip_dir)
     if country_exists and asn_exists:
@@ -134,31 +155,31 @@ def main():
            verify_database(geoip_dir / "GeoLite2-ASN.mmdb"):
             logger.info("All databases verified successfully!")
             return 0
-    
+
     # Check for license key
     license_key = os.environ.get("MAXMIND_LICENSE_KEY")
     if not license_key:
         print_manual_instructions(geoip_dir)
         logger.error("MAXMIND_LICENSE_KEY environment variable not set")
         return 1
-    
+
     # Download databases
     success = True
-    
+
     if not country_exists:
         url = GEOLITE2_COUNTRY_URL.format(LICENSE_KEY=license_key)
         success &= download_and_extract(url, geoip_dir, "GeoLite2-Country.mmdb")
-    
+
     if not asn_exists:
         url = GEOLITE2_ASN_URL.format(LICENSE_KEY=license_key)
         success &= download_and_extract(url, geoip_dir, "GeoLite2-ASN.mmdb")
-    
+
     # Verify
     if success:
         success &= verify_database(geoip_dir / "GeoLite2-Country.mmdb")
         if (geoip_dir / "GeoLite2-ASN.mmdb").exists():
             success &= verify_database(geoip_dir / "GeoLite2-ASN.mmdb")
-    
+
     if success:
         logger.info("GeoIP setup completed successfully!")
         return 0
